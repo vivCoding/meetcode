@@ -13,8 +13,8 @@ export default async function handler(
   if (req.method === "POST") {
     const token = await getToken({ req })
 
-    if (token) {
-      const { csrf, lcSession } = token.lc as any
+    if (token && token.lc) {
+      const { csrf, lcSession } = token.lc
       const { questionSlug, questionId, lang, code } = req.body
       if (!questionSlug || !questionId || !lang || !code) {
         return res.status(200).json({ success: false, error: "Blank inputs!" })

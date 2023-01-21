@@ -18,7 +18,7 @@ export default function Navbar({ profile }: NavbarProps) {
       direction="row"
       alignItems="center"
       sx={{
-        height: "10vh",
+        height: "8vh",
         backgroundColor: "#293a4c",
         paddingLeft: 4,
         paddingRight: 4,
@@ -39,7 +39,7 @@ export default function Navbar({ profile }: NavbarProps) {
       <UserAvatar
         username={profile.username}
         userAvatar={profile.userAvatar}
-        // size="lg"
+        size="sm"
         sx={{
           ml: "auto",
           "&:hover": {

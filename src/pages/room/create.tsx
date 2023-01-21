@@ -91,6 +91,7 @@ export default function CreatePage({
     if (reason === "selectOption" && !!value) {
       console.log(value)
       setQuestions((prev) => [...prev, value])
+      setSearchValue("")
     }
   }
 
@@ -108,6 +109,7 @@ export default function CreatePage({
         sx={{
           marginTop: 5,
           textAlign: "center",
+          mb: 3,
         }}
       >
         <Sheet
@@ -464,12 +466,19 @@ export default function CreatePage({
 export const getServerSideProps: GetServerSideProps<PropsType> = async (
   context
 ) => {
-  const token = await getToken({ req: context.req })
+  // TODO change
+  // const token = await getToken({ req: context.req })
+  const token = true
   if (token) {
-    console.log("got lc", token.profile?.username)
+    // console.log("got lc", (token.profile as any).username)
     return {
       props: {
-        profile: token.profile as UserProfile,
+        // profile: token.profile as UserProfile,
+        profile: {
+          username: "vvvu",
+          userAvatar:
+            "https://assets.leetcode.com/users/avatars/avatar_1648876515.png",
+        },
       },
     }
   }

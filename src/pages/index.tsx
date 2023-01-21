@@ -7,7 +7,7 @@ import Helmet from "@/components/Helmet"
 export default function Home() {
   return (
     <>
-      <Helmet title="Ternary Search" />
+      <Helmet title="MeetCode" />
       <div
         style={{
           width: "100%",
@@ -29,7 +29,7 @@ export default function Home() {
         }}
       >
         <Typography level="display1" sx={{ mb: 2 }}>
-          Ternary Search
+          MeetCode
         </Typography>
         <Typography level="h4">
           Collaborate and compete on LeetCode problems together

@@ -1,10 +1,13 @@
 import Editor from "@monaco-editor/react"
 import {
   Add,
+  ArrowBack,
+  ArrowForward,
   Check,
   Close,
   ExpandMore,
   Visibility,
+  VisibilityOffOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material"
 import {
@@ -23,10 +26,12 @@ import {
   TabList,
   TabPanel,
   Tabs,
+  TextField,
   Textarea,
   Typography,
 } from "@mui/joy"
 import axios from "axios"
+import Link from "next/link"
 import { useRouter } from "next/router"
 import { getToken } from "next-auth/jwt"
 import { useEffect, useState } from "react"
@@ -34,6 +39,7 @@ import Split from "react-split"
 import { toast } from "react-toastify"
 
 import ChatView from "@/components/Chat"
+import SpectateDialog from "@/components/Dialogs/Spectate"
 import RoomNavbar from "@/components/Navbar/room"
 import { AVAIL_THEMES } from "@/constants/misc"
 import TOAST_CONFIG from "@/constants/toastconfig"
@@ -52,7 +58,7 @@ export default function RoomPage({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter()
   const roomCode = router.query.roomCode as string
-  const [questionSlug, setQuestionSlug] = useState("two-sum")
+  const [questionSlug, setQuestionSlug] = useState("trapping-rain-water")
   const [question, setQuestion] = useState<Question | undefined>()
   const [testCases, setTestCases] = useState("")
 
@@ -74,6 +80,11 @@ export default function RoomPage({
 
   const [messages, setMessages] = useState<MessageType[]>([])
   const [ready, setReady] = useState(false)
+
+  const [tabIdx, setTabIdx] = useState(0)
+
+  const [openSpectateDialog, setOpenSpectateDialog] = useState(false)
+  const [personSpectating, setPersonSpectating] = useState<string | undefined>()
 
   useEffect(() => {
     axios.get("/api/problem/get", { params: { questionSlug } }).then((res) => {
@@ -110,11 +121,19 @@ export default function RoomPage({
   }, [])
 
   const handleRun = () => {
+    setTabIdx(1)
     setIsRunning(true)
   }
 
   const handleSubmit = () => {
+    setTabIdx(1)
     setIsSubmitting(true)
+  }
+
+  const handleSpectate = (username?: string) => {
+    if (username) {
+    }
+    setOpenSpectateDialog(false)
   }
 
   if (!profile) return <>Loading...</>
@@ -123,7 +142,7 @@ export default function RoomPage({
       <RoomNavbar roomCode={roomCode} profile={profile} />
       <div style={{ height: "90vh" }}>
         <Split
-          // sizes={[40, 60]}
+          sizes={[35, 40, 25]}
           minSize={100}
           expandToMin={false}
           gutterSize={10}
@@ -148,9 +167,30 @@ export default function RoomPage({
           >
             {!!question ? (
               <>
-                <Typography level="h5">
-                  {question?.questionId}. {question?.title}
-                </Typography>
+                <Stack
+                  direction="row"
+                  justifyContent="flex-end"
+                  alignItems="center"
+                >
+                  <Typography level="h5" sx={{ mb: 1, mr: "auto" }}>
+                    {question?.questionId}. {question?.title}
+                  </Typography>
+                  <IconButton variant="plain" sx={{ ml: 2 }}>
+                    <ArrowBack />
+                  </IconButton>
+                  <IconButton variant="plain">
+                    <ArrowForward />
+                  </IconButton>
+                </Stack>
+                <Link
+                  href={`https://leetcode.com/problems/${question.titleSlug}`}
+                  style={{ textDecoration: "none" }}
+                  target="_blank"
+                >
+                  <Button size="sm" color="info">
+                    View on LeetCode
+                  </Button>
+                </Link>
                 <div
                   dangerouslySetInnerHTML={{
                     __html: question ? question.content : "",
@@ -162,7 +202,7 @@ export default function RoomPage({
             )}
           </Box>
           <Split
-            sizes={[40, 60]}
+            sizes={[55, 45]}
             expandToMin={false}
             gutterSize={10}
             gutterAlign="center"
@@ -179,16 +219,23 @@ export default function RoomPage({
                 <Button variant="outlined" color="neutral">
                   My Code
                 </Button>
-                <Button
-                  variant="outlined"
-                  color="neutral"
-                  sx={{
-                    mr: "auto",
-                  }}
-                  endDecorator={<VisibilityOutlined />}
-                >
-                  Spectate
-                </Button>
+                {/* <Button variant="outlined" color="neutral">
+                  frankieray12345
+                </Button> */}
+                {!!!personSpectating && (
+                  <IconButton
+                    variant="outlined"
+                    color="neutral"
+                    onClick={() => setOpenSpectateDialog(true)}
+                  >
+                    <VisibilityOutlined />
+                  </IconButton>
+                )}
+                {!!personSpectating && (
+                  <IconButton variant="outlined" color="danger">
+                    <VisibilityOffOutlined />
+                  </IconButton>
+                )}
                 <Button
                   variant="plain"
                   size="sm"
@@ -198,6 +245,7 @@ export default function RoomPage({
                   sx={{
                     color: "azure",
                     mr: 1,
+                    ml: "auto",
                   }}
                 >
                   {currentSnippet?.lang}
@@ -231,7 +279,8 @@ export default function RoomPage({
               <Box flexGrow={1} sx={{ overflow: "auto", p: 2 }}>
                 <Box>
                   <Tabs
-                    defaultValue={0}
+                    value={tabIdx}
+                    onChange={(_, val) => setTabIdx(val as number)}
                     sx={{
                       borderRadius: "lg",
                       backgroundColor: "#1a2532",
@@ -244,6 +293,7 @@ export default function RoomPage({
                       <Tab>Result</Tab>
                     </TabList>
                     <TabPanel value={0} sx={{ width: "100%", height: "100%" }}>
+                      <Typography my={2}>Enter test cases below</Typography>
                       <Textarea
                         defaultValue={testCases}
                         onChange={(e) => setTestCases(e.target.value)}
@@ -253,6 +303,27 @@ export default function RoomPage({
                           // overflowY: "auto",
                         }}
                       />
+                    </TabPanel>
+                    <TabPanel value={1} sx={{ width: "100%", p: 2 }}>
+                      {/* <Stack spacing={1}>
+                        <Typography level="h3" sx={{ color: "lime" }}>
+                          Success!
+                        </Typography>
+                        <Typography>
+                          Your code worked fine and dandy!
+                        </Typography>
+                      </Stack> */}
+                      <Stack spacing={1}>
+                        <Typography level="h3" color="danger">
+                          Wrong Answer :(
+                        </Typography>
+                        <Typography>Wrong Answer on Test Case</Typography>
+                        <TextField value="[1, 2, 3]" />
+                        <Typography>Expected</Typography>
+                        <TextField value="3" />
+                        <Typography>Actual</Typography>
+                        <TextField value="4" />
+                      </Stack>
                     </TabPanel>
                   </Tabs>
                 </Box>
@@ -366,6 +437,12 @@ export default function RoomPage({
             </MenuItem>
           ))}
         </Menu>
+        <SpectateDialog
+          onClose={handleSpectate}
+          open={openSpectateDialog}
+          currentUser={profile.username}
+          usernames={["frankieray12345", "vvvu", "jviv2061"]}
+        />
       </div>
     </>
   )
