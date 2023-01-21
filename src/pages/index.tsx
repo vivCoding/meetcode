@@ -2,12 +2,12 @@ import { Button, Stack, Typography } from "@mui/joy"
 import Link from "next/link"
 import { useRouter } from "next/router"
 
-import Helment from "@/components/Helmet"
+import Helmet from "@/components/Helmet"
 
 export default function Home() {
   return (
     <>
-      <Helment title="Ternary Search" />
+      <Helmet title="Ternary Search" />
       <div
         style={{
           width: "100%",
@@ -16,6 +16,7 @@ export default function Home() {
           backgroundBlendMode: "darken",
           backgroundRepeat: "no-repeat",
           filter: "brightness(60%)",
+          backgroundSize: "cover",
         }}
       />
       <div
