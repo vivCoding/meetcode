@@ -14,7 +14,10 @@ export type Problem = {
 
 export type Settings = {
   mode: string
-  problem: Problem
+  // problem: Problem
+  problem_tags: string[]
+  problem_difficulty: string
+  problem_list_tag: string
   number_of_questions: number
   time_limit: number
   time_limit_total: number
@@ -24,10 +27,11 @@ export type Settings = {
 }
 
 export type Room = {
-  room_settings: Settings
+  room_settings?: Settings
   question_queue: string[]
   member_list: string[]
-  leaderboard: { string: number }[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  leaderboard: any[]
   admin: string
   problem_complete_status: string
 }
