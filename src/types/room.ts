@@ -1,3 +1,11 @@
+import type { UserProfile } from "./leetcode/user"
+
+export type MessageType = {
+  user: UserProfile
+  message: string
+  timestamp: string
+}
+
 export type Problem = {
   problem_tags: string[]
   problem_difficulty: string

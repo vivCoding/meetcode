@@ -95,7 +95,7 @@ export default function CreatePage({
   }
 
   const handleCreate = () => {
-    router.push("/room/create")
+    router.push("/room/1234abcd")
   }
 
   if (!profile) return <>Loading...</>
