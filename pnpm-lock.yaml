@@ -4,6 +4,7 @@ specifiers:
   '@emotion/react': ^11.10.5
   '@emotion/styled': ^11.10.5
   '@fontsource/public-sans': ^4.5.11
+  '@fontsource/roboto': ^4.5.8
   '@monaco-editor/react': ^4.4.6
   '@mui/icons-material': ^5.11.0
   '@mui/joy': 5.0.0-alpha.61
@@ -40,6 +41,7 @@ dependencies:
   '@emotion/react': 11.10.5_kzbn2opkn2327fwg5yzwzya5o4
   '@emotion/styled': 11.10.5_qvatmowesywn4ye42qoh247szu
   '@fontsource/public-sans': 4.5.12
+  '@fontsource/roboto': 4.5.8
   '@monaco-editor/react': 4.4.6_biqbaboplfbrettd7655fr4n2y
   '@mui/icons-material': 5.11.0_qf6ggnnrpsyhzwt6sk54rmqqzq
   '@mui/joy': 5.0.0-alpha.61_lskpmcsdi7ipu6qpuapyu56ihm
@@ -1110,6 +1112,10 @@ packages:
 
   /@fontsource/public-sans/4.5.12:
     resolution: {integrity: sha512-sa6lr+lQQB1Iif2xyWZmcCbReV3dj6m0CNXw5xbDwKO4BPeZxz+G+Vy9zWdzhaKpjmK6Ap2wIn1x79XVcvMRtQ==}
+    dev: false
+
+  /@fontsource/roboto/4.5.8:
+    resolution: {integrity: sha512-CnD7zLItIzt86q4Sj3kZUiLcBk1dSk81qcqgMGaZe7SQ1P8hFNxhMl5AZthK1zrDM5m74VVhaOpuMGIL4gagaA==}
     dev: false
 
   /@humanwhocodes/config-array/0.11.8:

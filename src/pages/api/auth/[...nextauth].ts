@@ -1,7 +1,7 @@
 import NextAuth, { User } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 
-import { login, login2 } from "@/leetcode/login"
+import { login } from "@/leetcode/login"
 import { getCurrentUser, getProfile } from "@/leetcode/user"
 
 import type { NextAuthOptions } from "next-auth"
@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
         if (req.method === "POST") {
           if (credentials) {
             const { user, password } = credentials
-            const res = await login2(user, password)
+            const res = await login(user, password)
             if (res) {
               return { id: user, ...res, name: user }
             }
@@ -42,7 +42,9 @@ export const authOptions: NextAuthOptions = {
       // should update lc csrf and lcSession tokens too, but eh
       if (user) {
         token.lc = {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           csrf: (user as any).csrf,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           lcSession: (user as any).lcSession,
         }
       }
