@@ -33,7 +33,7 @@ function jobFinished(workerId: number) {
   }
 }
 // Given username/email and password, gets tokens needed to use leetcode stuff (queues it up)
-export async function login(
+export async function login2(
   user: string,
   password: string
 ): Promise<
@@ -130,7 +130,7 @@ export async function login(
 }
 
 // Given username/email and password, gets tokens needed to use leetcode stuff
-export async function login2(
+export async function login(
   user: string,
   password: string
 ): Promise<

@@ -31,10 +31,11 @@ import {
   Typography,
 } from "@mui/joy"
 import axios from "axios"
+import JSConfetti from "js-confetti"
 import Link from "next/link"
 import { useRouter } from "next/router"
 import { getToken } from "next-auth/jwt"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Split from "react-split"
 import { toast } from "react-toastify"
 
@@ -43,8 +44,10 @@ import SpectateDialog from "@/components/Dialogs/Spectate"
 import RoomNavbar from "@/components/Navbar/room"
 import { AVAIL_THEMES } from "@/constants/misc"
 import TOAST_CONFIG from "@/constants/toastconfig"
+import { sleep } from "@/utils/misc"
 
 import type { CodeSnippet, Question } from "@/types/leetcode/question"
+import type { SubmitResult, TestResult } from "@/types/leetcode/runResult"
 import type { UserProfile } from "@/types/leetcode/user"
 import type { MessageType } from "@/types/room"
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next"
@@ -58,6 +61,8 @@ export default function RoomPage({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter()
   const roomCode = router.query.roomCode as string
+  const jsConfetti = useRef<JSConfetti | undefined>(undefined)
+
   const [questionSlug, setQuestionSlug] = useState("trapping-rain-water")
   const [question, setQuestion] = useState<Question | undefined>()
   const [testCases, setTestCases] = useState("")
@@ -77,6 +82,12 @@ export default function RoomPage({
 
   const [running, setIsRunning] = useState(false)
   const [submitting, setIsSubmitting] = useState(false)
+  const [testResult, setTestResult] = useState<TestResult | undefined>(
+    undefined
+  )
+  const [submissionResult, setSubmissionResult] = useState<
+    SubmitResult | undefined
+  >(undefined)
 
   const [messages, setMessages] = useState<MessageType[]>([])
   const [ready, setReady] = useState(false)
@@ -85,6 +96,29 @@ export default function RoomPage({
 
   const [openSpectateDialog, setOpenSpectateDialog] = useState(false)
   const [personSpectating, setPersonSpectating] = useState<string | undefined>()
+
+  useEffect(() => {
+    // avoid creating the canvas multiple times
+    let cvs = document.getElementById("confettiCanvas") as HTMLCanvasElement
+    if (!cvs) {
+      cvs = document.createElement("canvas")
+      cvs.width = window.innerWidth
+      cvs.height = window.innerHeight
+      cvs.setAttribute("id", "confettiCanvas")
+      cvs.setAttribute(
+        "style",
+        "position: fixed; width: 100%; height: 100%; top: 0px; left: 0px; z-index: 1000; pointer-events: none;"
+      )
+      const par = document.getElementById("confettiParent")
+      if (par) {
+        par.appendChild(cvs)
+      }
+      // console.log(par)
+      // console.log("created js confetti canvas")
+    }
+    jsConfetti.current = new JSConfetti({ canvas: cvs })
+    // position: fixed; width: 100%; height: 100%; top: 0px; left: 0px; z-index: 1000; pointer-events: none;
+  }, [])
 
   useEffect(() => {
     axios.get("/api/problem/get", { params: { questionSlug } }).then((res) => {
@@ -120,14 +154,74 @@ export default function RoomPage({
     setReady(true)
   }, [])
 
-  const handleRun = () => {
-    setTabIdx(1)
-    setIsRunning(true)
+  const handleRun = async () => {
+    if (question && currentSnippet) {
+      setTabIdx(1)
+      setIsRunning(true)
+      setSubmissionResult(undefined)
+      const res = await axios.post("/api/problem/run", {
+        questionSlug: question.titleSlug,
+        questionId: question.questionId,
+        lang: currentSnippet.langSlug,
+        code: editorValue,
+        testCases,
+      })
+      if (res.status === 200 && res.data) {
+        if (res.data.success) {
+          console.log(res.data.data)
+          setTestResult(res.data.data)
+          if (res.data.data.status_msg === "Accepted") {
+            toast.success("Test cases passed", TOAST_CONFIG)
+          } else {
+            toast.error(
+              `Error in test cases: ${
+                res.data.data.status_msg ?? "Skill issue"
+              }`,
+              TOAST_CONFIG
+            )
+          }
+        } else {
+          toast.error(`uh oh bad oh! ${res.data.error}`, TOAST_CONFIG)
+        }
+      }
+      setIsRunning(false)
+    }
   }
 
-  const handleSubmit = () => {
-    setTabIdx(1)
-    setIsSubmitting(true)
+  const handleSubmit = async () => {
+    if (question && currentSnippet) {
+      setTabIdx(1)
+      setIsSubmitting(true)
+      setTestResult(undefined)
+      const res = await axios.post("/api/problem/submit", {
+        questionSlug: question.titleSlug,
+        questionId: question.questionId,
+        lang: currentSnippet.langSlug,
+        code: editorValue,
+      })
+      if (res.status === 200 && res.data) {
+        if (res.data.success) {
+          console.log(res.data.data)
+          setSubmissionResult(res.data.data)
+          if (res.data.data.status_msg === "Accepted") {
+            // console.log("yeay!")
+            toast.success("Success! Your code was accepted!", TOAST_CONFIG)
+            if (jsConfetti.current) {
+              await sleep(250)
+              jsConfetti.current.addConfetti()
+            }
+          } else {
+            toast.error(
+              `Drat! You got ${res.data.data.status_msg ?? "Skill issue"}`,
+              TOAST_CONFIG
+            )
+          }
+        } else {
+          toast.error(`uh oh bad oh! ${res.data.error}`, TOAST_CONFIG)
+        }
+      }
+      setIsSubmitting(false)
+    }
   }
 
   const handleSpectate = (username?: string) => {
@@ -138,7 +232,7 @@ export default function RoomPage({
 
   if (!profile) return <>Loading...</>
   return (
-    <>
+    <Box id="confettiParent">
       <RoomNavbar roomCode={roomCode} profile={profile} />
       <div style={{ height: "90vh" }}>
         <Split
@@ -305,25 +399,91 @@ export default function RoomPage({
                       />
                     </TabPanel>
                     <TabPanel value={1} sx={{ width: "100%", p: 2 }}>
-                      {/* <Stack spacing={1}>
-                        <Typography level="h3" sx={{ color: "lime" }}>
-                          Success!
-                        </Typography>
-                        <Typography>
-                          Your code worked fine and dandy!
-                        </Typography>
-                      </Stack> */}
-                      <Stack spacing={1}>
-                        <Typography level="h3" color="danger">
-                          Wrong Answer :(
-                        </Typography>
-                        <Typography>Wrong Answer on Test Case</Typography>
-                        <TextField value="[1, 2, 3]" />
-                        <Typography>Expected</Typography>
-                        <TextField value="3" />
-                        <Typography>Actual</Typography>
-                        <TextField value="4" />
-                      </Stack>
+                      {!submitting && !running && (
+                        <>
+                          {!!testResult && (
+                            <Stack spacing={1}>
+                              <Typography level="h3">
+                                {testResult.status_msg}:{" "}
+                                {testResult.correct_answer ?? false
+                                  ? "Correct"
+                                  : "Incorrect"}{" "}
+                                Answer
+                              </Typography>
+                              <Typography>
+                                {testResult.correct_answer ?? false
+                                  ? "Correct"
+                                  : "Incorrect"}
+                              </Typography>
+                              {testResult.status_msg === "Compile Error" && (
+                                <Typography color="danger">
+                                  {testResult.full_compile_error}
+                                </Typography>
+                              )}
+                              {testResult.status_msg === "Runtime Error" && (
+                                <Typography color="danger">
+                                  {testResult.full_runtime_error}
+                                </Typography>
+                              )}
+                              {!!testResult.expected_code_answer &&
+                                !!testResult.code_answer && (
+                                  <>
+                                    <Typography>Expected</Typography>
+                                    <TextField
+                                      value={testResult.expected_code_answer}
+                                    />
+                                    <Typography>Actual</Typography>
+                                    <TextField value={testResult.code_answer} />
+                                  </>
+                                )}
+                            </Stack>
+                          )}
+                          {!!submissionResult &&
+                            (submissionResult.status_msg === "Accepted" ? (
+                              <Stack spacing={1}>
+                                <Typography level="h3" sx={{ color: "lime" }}>
+                                  Success!
+                                </Typography>
+                                <Typography>
+                                  Your code worked fine and dandy!
+                                </Typography>
+                              </Stack>
+                            ) : (
+                              <Stack spacing={1}>
+                                <Typography level="h3" color="danger">
+                                  {submissionResult.status_msg} :(
+                                </Typography>
+                                {submissionResult.status_msg ===
+                                  "Compile Error" && (
+                                  <Typography color="danger">
+                                    {submissionResult.full_compile_error}
+                                  </Typography>
+                                )}
+                                {submissionResult.status_msg ===
+                                  "Wrong Answer" ||
+                                  (submissionResult.status_msg ===
+                                    "Time Limit Exceeded" && (
+                                    <>
+                                      <Typography>
+                                        Wrong Answer on Test Case
+                                      </Typography>
+                                      <TextField
+                                        value={submissionResult.last_testcase}
+                                      />
+                                      <Typography>Expected</Typography>
+                                      <TextField
+                                        value={submissionResult.expected_output}
+                                      />
+                                      <Typography>Actual</Typography>
+                                      <TextField
+                                        value={submissionResult.code_output}
+                                      />
+                                    </>
+                                  ))}
+                              </Stack>
+                            ))}
+                        </>
+                      )}
                     </TabPanel>
                   </Tabs>
                 </Box>
@@ -444,7 +604,7 @@ export default function RoomPage({
           usernames={["frankieray12345", "vvvu", "jviv2061"]}
         />
       </div>
-    </>
+    </Box>
   )
 }
 

@@ -34,6 +34,9 @@ export type TestResult = {
   // applies to Compile Error (from status_msg)
   compile_error: string
   full_compile_error: string
+  invalid_testcase: boolean
+  runtime_error: string
+  full_runtime_error: string
 }
 
 export type SubmitResult = {
@@ -60,4 +63,6 @@ export type SubmitResult = {
   state: string
   // applies to Wrong Answer and TLE
   last_testcase: string
+  compile_error: string
+  full_compile_error: string
 }
