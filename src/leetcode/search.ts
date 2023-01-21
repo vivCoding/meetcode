@@ -21,8 +21,10 @@ export async function searchQuestions(
   }
   if (topic) filters["tags"] = topic
   if (listId) filters["listId"] = listId
-  const res = await axios.post("https://leetcode.com/graphql/", {
-    query: `
+  const res = await axios.post(
+    "https://leetcode.com/graphql/",
+    {
+      query: `
         query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
           problemsetQuestionList: questionList(
               categorySlug: $categorySlug
@@ -40,18 +42,36 @@ export async function searchQuestions(
               }
           }
       `,
-    variables: {
-      categorySlug: "",
-      filters,
-      limit: pageLimit,
-      skip: page * pageLimit,
+      variables: {
+        categorySlug: "",
+        filters,
+        limit: pageLimit,
+        skip: page * pageLimit,
+      },
     },
-  })
+    {
+      headers: {
+        "Accept-Encoding": "gzip,deflate,compress",
+      },
+    }
+  )
 
   if (res.status !== 200) {
     console.error("lc bad searchQuestion", res.status)
     return undefined
   }
 
-  return res.data
+  const data = res.data
+  if (
+    !!data &&
+    !!data.data &&
+    !!data.data.problemsetQuestionList &&
+    !!data.data.problemsetQuestionList.questions
+  ) {
+    const questions = data.data.problemsetQuestionList.questions.filter(
+      (question: any) => !question.paidOnly
+    )
+    return questions
+  }
+  return undefined
 }

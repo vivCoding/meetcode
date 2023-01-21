@@ -16,6 +16,7 @@ export default function Home() {
           backgroundBlendMode: "darken",
           backgroundRepeat: "no-repeat",
           filter: "brightness(60%)",
+          backgroundSize: "cover",
         }}
       />
       <div

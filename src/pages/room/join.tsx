@@ -110,7 +110,7 @@ export const getServerSideProps: GetServerSideProps<PropsType> = async (
   return {
     props: {},
     redirect: {
-      destination: "/signin",
+      destination: "/login",
     },
   }
 }

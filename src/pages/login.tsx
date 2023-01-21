@@ -62,6 +62,7 @@ export default function LeetcodePage() {
           backgroundBlendMode: "darken",
           backgroundRepeat: "no-repeat",
           filter: "brightness(60%)",
+          backgroundSize: "cover",
         }}
       />
       <div
