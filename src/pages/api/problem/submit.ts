@@ -6,10 +6,6 @@ import { submitQuestion } from "@/leetcode/run"
 
 import type { NextApiRequest, NextApiResponse } from "next"
 
-type Data = {
-  name: string
-}
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -35,12 +31,10 @@ export default async function handler(
       if (submission) {
         return res.status(200).json({ success: true, data: submission })
       }
-      return res
-        .status(200)
-        .json({
-          success: false,
-          error: "Something went wrong. Please try again",
-        })
+      return res.status(200).json({
+        success: false,
+        error: "Something went wrong. Please try again",
+      })
     }
     return res.status(401)
   }
