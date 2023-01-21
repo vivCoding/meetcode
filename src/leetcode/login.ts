@@ -13,12 +13,12 @@ const queue: (() => void)[] = []
 const options = new Options()
 options.headless()
 options.addArguments("--new-instance")
-for (let i = 0; i < MAX_WORKERS; i++) {
-  workers.push(
-    new Builder().forBrowser(Browser.FIREFOX).setFirefoxOptions(options).build()
-  )
-  workersAvailable.push(i)
-}
+// for (let i = 0; i < MAX_WORKERS; i++) {
+//   workers.push(
+//     new Builder().forBrowser(Browser.FIREFOX).setFirefoxOptions(options).build()
+//   )
+//   workersAvailable.push(i)
+// }
 
 console.log("i shud run once!")
 console.log("available workers", workersAvailable)
