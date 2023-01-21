@@ -20,7 +20,7 @@ import { signIn } from "next-auth/react"
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 
-import Helment from "@/components/Helmet"
+import Helmet from "@/components/Helmet"
 import TOAST_CONFIG from "@/constants/toastconfig"
 
 // https://next-auth.js.org/configuration/pages#credentials-sign-in
@@ -53,7 +53,7 @@ export default function LeetcodePage() {
 
   return (
     <>
-      <Helment title="Login" />
+      <Helmet title="Login" />
       <div
         style={{
           width: "100%",
@@ -88,7 +88,7 @@ export default function LeetcodePage() {
             Home
           </Typography>
         </Link>
-        <Helment title="Log In" />
+        <Helmet title="Log In" />
         <form onSubmit={(e) => e.preventDefault()}>
           <Sheet
             variant="outlined"

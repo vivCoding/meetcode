@@ -33,7 +33,7 @@ import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { toast } from "react-toastify"
 import { io } from "socket.io-client"
 
-import Helment from "@/components/Helmet"
+import Helmet from "@/components/Helmet"
 import UserAvatar from "@/components/UserAvatar"
 import EMOJIS from "@/constants/emojis.json"
 import TOAST_CONFIG from "@/constants/toastconfig"
@@ -346,7 +346,7 @@ const RoomPage: NextPageWithLayout = ({ profile }: PropsType) => {
 
   return (
     <Container>
-      <Helment title={roomCode} />
+      <Helmet title={roomCode} />
       <Typography level="h3" sx={{ mb: 1 }}>
         Chatroom: {roomCode}
       </Typography>

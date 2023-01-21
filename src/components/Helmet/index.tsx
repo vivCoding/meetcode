@@ -4,7 +4,7 @@ type HelmetProps = {
   title: string
 }
 
-const Helment = ({ title }: HelmetProps) => {
+const Helmet = ({ title }: HelmetProps) => {
   return (
     <Head>
       <title key="title">{title}</title>
@@ -17,4 +17,4 @@ const Helment = ({ title }: HelmetProps) => {
   )
 }
 
-export default Helment
+export default Helmet
