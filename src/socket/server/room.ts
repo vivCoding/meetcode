@@ -48,6 +48,9 @@ export function onDisconnect(io: Server, socket: Socket) {
     const room = await getRoom(roomCode)
     if (room) {
       room.memberList = room.memberList.filter((member) => member !== username)
+      room.usersInProgress = room.usersInProgress.filter(
+        (member) => member !== username
+      )
       delete room.leaderboard[username]
       await updateRoom(roomCode, room)
       io.to(roomCode).emit("memberLeft", username, userAvatar, room)
