@@ -1,4 +1,6 @@
 /* eslint-disable no-var */
+import { writeFile } from "fs"
+
 import { Browser, Builder, until } from "selenium-webdriver"
 import { Options } from "selenium-webdriver/firefox"
 
@@ -90,15 +92,15 @@ export async function login(
 
     // ensure we're on the next page before attempting to get tokens
     try {
-      await driver.wait(until.urlIs("https://leetcode.com/"), 10000)
+      await driver.wait(until.urlIs("https://leetcode.com/"), 60000)
       console.log("- ok 5", user)
     } catch (e) {
       console.log("bad 2 login", user, e)
-      // const img = await driver.takeScreenshot()
-      // writeFile("capture.png", img, {encoding: "base64"}, (e) => {
-      //   if (!e) console.log("check capture.png")
-      //   else console.log("could not create capture.png")
-      // })
+      const img = await driver.takeScreenshot()
+      writeFile("capture.png", img, { encoding: "base64" }, (e) => {
+        if (!e) console.log("check capture.png")
+        else console.log("could not create capture.png")
+      })
       jobFinished(workerId)
       return undefined
     }
