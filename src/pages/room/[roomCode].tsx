@@ -102,6 +102,7 @@ export default function RoomPage({
 
   const [openSpectateDialog, setOpenSpectateDialog] = useState(false)
   const [personSpectating, setPersonSpectating] = useState<string | undefined>()
+  const [spectactedCode, setSpectatedCode] = useState<string>("")
 
   const sio = useRef<Socket | undefined>(undefined)
 
@@ -131,13 +132,17 @@ export default function RoomPage({
   }, [])
 
   useEffect(() => {
-    axios.get("/api/problem/get", { params: { questionSlug } }).then((res) => {
-      if (res.status === 200 && res.data) {
-        setQuestion(res.data.data)
-      } else {
-        toast.error("Could not get question :(", TOAST_CONFIG)
-      }
-    })
+    if (questionSlug) {
+      axios
+        .get("/api/problem/get", { params: { questionSlug } })
+        .then((res) => {
+          if (res.status === 200 && res.data) {
+            setQuestion(res.data.data)
+          } else {
+            toast.error("Could not get question :(", TOAST_CONFIG)
+          }
+        })
+    }
   }, [questionSlug])
 
   useEffect(() => {
@@ -178,14 +183,9 @@ export default function RoomPage({
                     if (roomState.isRunning) {
                       if (
                         roomState.roomSettings.mode === "Casual" &&
-                        roomState.currentQuestion
+                        roomState.isRunning
                       ) {
                         setQuestionSlug(roomState.currentQuestion)
-                      } else if (
-                        roomState.roomSettings.mode === "Competitive"
-                      ) {
-                        setQuestionSlug(roomState.questionQueue[0])
-                        setQuestionIdx(0)
                       }
                     }
                   } else {
@@ -197,13 +197,8 @@ export default function RoomPage({
 
             sio.current.on(
               "newMember",
-              (username: string, userAvatar: string) => {
-                setRoomState((prev) => {
-                  if (prev) {
-                    prev.memberList.push(username)
-                  }
-                  return prev
-                })
+              (username: string, userAvatar: string, room: RoomModelType) => {
+                setRoomState(room)
                 setMessages((prev) => [
                   ...prev,
                   {
@@ -218,15 +213,8 @@ export default function RoomPage({
 
             sio.current.on(
               "memberLeft",
-              (username: string, userAvatar: string) => {
-                setRoomState((prev) => {
-                  if (prev) {
-                    prev.memberList = prev.memberList.filter(
-                      (member) => member !== username
-                    )
-                  }
-                  return prev
-                })
+              (username: string, userAvatar: string, room: RoomModelType) => {
+                setRoomState(room)
                 setMessages((prev) => [
                   ...prev,
                   {
@@ -252,6 +240,60 @@ export default function RoomPage({
                 ])
               }
             )
+
+            sio.current.on(
+              "memberFinished",
+              (
+                username: string,
+                userAvatar: string,
+                roomState: RoomModelType
+              ) => {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    user: { username, userAvatar },
+                    message: "successfully submitted!",
+                    timestamp: new Date().toLocaleTimeString(),
+                    statusMessage: true,
+                  },
+                ])
+                setRoomState(roomState)
+              }
+            )
+
+            sio.current.on(
+              "memberSurrendered",
+              (
+                username: string,
+                userAvatar: string,
+                roomState: RoomModelType
+              ) => {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    user: { username, userAvatar },
+                    message: "gave up :(",
+                    timestamp: new Date().toLocaleTimeString(),
+                    statusMessage: true,
+                  },
+                ])
+                setRoomState(roomState)
+              }
+            )
+
+            sio.current.on("roomStarted", (roomState: RoomModelType) => {
+              setRoomState(roomState)
+              setQuestionSlug(roomState.currentQuestion)
+            })
+
+            // sio.current.on("allMembersFinished", () => {
+            //   setRoomState((prev) => {
+            //     if (prev) {
+            //       return { ...prev, isRunning: false }
+            //     }
+            //     return prev
+            //   })
+            // })
 
             sio.current.on("connect_error", () => {
               toast.error("Could not join room :(", TOAST_CONFIG)
@@ -337,6 +379,16 @@ export default function RoomPage({
               await sleep(250)
               jsConfetti.current.addConfetti()
             }
+            if (sio.current) {
+              sio.current.emit(
+                "sendSubmissionStatus",
+                (roomState?: RoomModelType) => {
+                  if (!!roomState) {
+                    setRoomState(roomState)
+                  }
+                }
+              )
+            }
           } else {
             toast.error(
               `Drat! You got ${res.data.data.status_msg ?? "Skill issue"}`,
@@ -351,6 +403,24 @@ export default function RoomPage({
     }
   }
 
+  const handleGiveUp = () => {
+    if (sio.current) {
+      sio.current.emit("sendSurrenderStatus", (roomState?: RoomModelType) => {
+        if (!!roomState) {
+          setRoomState(roomState)
+        }
+      })
+    }
+  }
+
+  const handleStartRoom = () => {
+    if (sio.current) {
+      sio.current.emit("startRoom", (roomState?: RoomModelType) => {
+        setRoomState(roomState)
+      })
+    }
+  }
+
   const handleSpectate = (username?: string) => {
     if (username) {
     }
@@ -360,7 +430,13 @@ export default function RoomPage({
   if (!profile || !roomState) return <>Loading...</>
   return (
     <Box id="confettiParent">
-      <RoomNavbar roomCode={roomCode} profile={profile} roomState={roomState} />
+      <RoomNavbar
+        roomCode={roomCode}
+        profile={profile}
+        roomState={roomState}
+        onGiveUp={handleGiveUp}
+        onStartRoom={handleStartRoom}
+      />
       <div style={{ height: "90vh" }}>
         <Split
           sizes={[35, 40, 25]}
@@ -386,7 +462,7 @@ export default function RoomPage({
               backgroundColor: "#1b1d1e",
             }}
           >
-            {!!question ? (
+            {!!question && (
               <>
                 <Stack
                   direction="row"
@@ -441,8 +517,6 @@ export default function RoomPage({
                   }}
                 ></div>
               </>
-            ) : (
-              <Typography>Loading....</Typography>
             )}
           </Box>
           <Split

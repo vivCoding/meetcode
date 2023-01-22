@@ -14,11 +14,12 @@ export function joinRoom(io: Server, socket: Socket) {
     const room = await getRoom(roomCode)
     if (room) {
       socket.data.roomCode = roomCode
+      socket.join(roomCode)
       room.memberList.push(username)
       room.leaderboard[username] = 0
       await updateRoom(roomCode, room)
       callback(room)
-      io.to(roomCode).emit("newMember", username, userAvatar)
+      io.to(roomCode).emit("newMember", username, userAvatar, room)
     } else {
       callback(undefined)
     }
@@ -44,11 +45,14 @@ export function onDisconnect(io: Server, socket: Socket) {
     const room = await getRoom(roomCode)
     if (room) {
       room.memberList = room.memberList.filter((member) => member !== username)
-      if (room.memberList.length === 0) {
-        await deleteRoom(roomCode)
-      }
+      delete room.leaderboard[username]
+      await updateRoom(roomCode, room)
+      io.to(roomCode).emit("memberLeft", username, userAvatar, room)
       console.log("got disconnect from", username, "in", roomCode)
-      io.to(roomCode).emit("memberLeft", username, userAvatar)
+      if (room.memberList.length === 0 || room.admin === username) {
+        await deleteRoom(roomCode)
+        io.to(roomCode).disconnectSockets()
+      }
     }
   }
 }

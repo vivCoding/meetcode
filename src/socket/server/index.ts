@@ -2,7 +2,9 @@ import { getTokenFromSocket } from "@/utils/socket"
 
 import { startRoom } from "./admin"
 import { joinRoom, onDisconnect, sendMessage } from "./room"
+import { spectateUser, stopSpectatingUser, updateCode } from "./spectate"
 import { sendSubmissionStatus } from "./submit"
+import { sendSurrenderStatus } from "./surrender"
 
 import type { UserProfile } from "@/types/leetcode/user"
 import type { Server, Socket } from "socket.io"
@@ -36,6 +38,11 @@ export function onConnection(io: Server) {
       socket.on("sendMessage", sendMessage(io, socket))
       socket.on("disconnect", onDisconnect(io, socket))
       socket.on("sendSubmissionStatus", sendSubmissionStatus(io, socket))
+      socket.on("sendSurrenderStatus", sendSurrenderStatus(io, socket))
+
+      socket.on("spectateUser", spectateUser(io, socket))
+      socket.on("stopSpectatingUser", stopSpectatingUser(io, socket))
+      socket.on("updateCode", updateCode(io, socket))
     }
   }
 }

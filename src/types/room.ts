@@ -27,6 +27,6 @@ export type RoomModelType = {
   leaderboard: Record<string, number>
   admin: string
   usersInProgress: string[]
-  currentQuestion?: string
+  currentQuestion: string
   isRunning: boolean
 }

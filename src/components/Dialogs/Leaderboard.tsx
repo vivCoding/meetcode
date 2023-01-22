@@ -38,16 +38,21 @@ export default function LeaderboardDialog({
 
   useEffect(() => {
     const getProfiles = async () => {
+      console.log("got2", users)
       const profiles = []
       const usernames = Object.keys(users)
-      for (let i = 0; i < users.length; i++) {
+      console.log(usernames)
+      for (let i = 0; i < usernames.length; i++) {
+        // console.log("got", i, usernames[i])
         const res = await axios.get("/api/user", {
           params: { username: usernames[i] },
         })
-        if (res.status === 200) {
+        // console.log("got", i, usernames[i], res.status)
+        if (res.status === 200 || res.status === 304) {
           profiles.push({ user: res.data.data, points: users[usernames[i]] })
         }
       }
+      console.log("got3", profiles)
       setProfiles(profiles)
     }
     getProfiles()

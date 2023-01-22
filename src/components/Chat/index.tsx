@@ -263,8 +263,16 @@ export default function ChatView({
                     {msg.timestamp}
                   </Typography>
                 </Stack>
-                {msg.connectionMessage ? (
-                  <Typography fontStyle="italic">{msg.message}</Typography>
+                {msg.connectionMessage || msg.statusMessage ? (
+                  <Typography
+                    fontStyle="italic"
+                    fontWeight="bold"
+                    sx={{
+                      color: msg.statusMessage ? "lime" : "white",
+                    }}
+                  >
+                    {msg.message}
+                  </Typography>
                 ) : (
                   <Typography sx={{ wordBreak: "break-word", mb: 0.5 }}>
                     {msg.message}
@@ -273,7 +281,7 @@ export default function ChatView({
               </Stack>
             </Stack>
           ))}
-          {alertNew && (
+          {/* {alertNew && (
             <Alert
               variant="solid"
               color="info"
@@ -311,7 +319,7 @@ export default function ChatView({
             >
               New messages
             </Alert>
-          )}
+          )} */}
           <div id="endOfMessagesDiv" ref={endOfMessagesDiv} />
         </Box>
         <List

@@ -1,20 +1,39 @@
 import { getRoom, updateRoom } from "@/firebase/queries"
+import { pickRandomQuestion } from "@/leetcode/pick"
 
+import type { RoomModelType } from "@/types/room"
 import type { Server, Socket } from "socket.io"
 
 export function startRoom(io: Server, socket: Socket) {
-  return async () => {
+  return async (callback: (roomState?: RoomModelType) => void) => {
     const roomCode = socket.data.roomCode
+    const { username, userAvatar } = socket.data.profile
     const room = await getRoom(roomCode)
     if (room) {
-      // fetch the first question from the question queue
-      room.currentQuestion = room.questionQueue[0]
-      room.questionQueue = room.questionQueue.slice(1)
+      if (room.questionQueue.length > 0) {
+        // fetch the first question from the question queue
+        room.currentQuestion = room.questionQueue.shift() ?? ""
+      } else {
+        const res = await pickRandomQuestion(
+          room.roomSettings.problemDifficulty,
+          room.roomSettings.problemTags,
+          room.roomSettings.problemListTag
+        )
+        if (res) {
+          room.currentQuestion = res.titleSlug
+        } else {
+          room.currentQuestion = ""
+        }
+      }
       // set each room member to inProgress
       room.memberList.forEach((member) => {
         room.usersInProgress.push(member)
       })
-      // kick all spectators from this room
+      // set the room to running
+      room.isRunning = true
+      await updateRoom(roomCode, room)
+
+      // kick all spectators out of spectating rooms
       const clients = io.sockets.adapter.rooms.get(socket.data.roomCode)
       if (clients) {
         clients.forEach((clientId) => {
@@ -29,10 +48,16 @@ export function startRoom(io: Server, socket: Socket) {
           }
         })
       }
-      // set the room to running
-      room.isRunning = true
-
-      await updateRoom(roomCode, room)
+      callback(room)
+      io.to(roomCode).emit("roomStarted", room)
+      io.to(roomCode).emit(
+        "newMessage",
+        username,
+        userAvatar,
+        "started the round!"
+      )
+    } else {
+      callback(undefined)
     }
   }
 }

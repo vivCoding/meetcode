@@ -1,11 +1,15 @@
-import { createAdapter } from "@socket.io/postgres-adapter"
-import { Pool } from "pg"
+import { createAdapter } from "@socket.io/mongo-adapter"
+import { MongoClient } from "mongodb"
 import { Server } from "socket.io"
 
+import mongooseConnect from "@/mongodb/connect"
 import { authMiddleware, onConnection } from "@/socket/server"
 
 import type { NextApiResponseWithSocket } from "@/types/socket"
 import type { NextApiRequest } from "next"
+
+const DB = "mydb"
+const COLLECTION = "socket.io-adapter-events"
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,26 +22,25 @@ export default async function handler(
       console.log("Socket is initializing")
       const io = new Server(res.socket.server)
       res.socket.server.io = io
-      if (!process.env.POSTGRES_URL) {
-        console.error("no postgres url setup!")
+
+      if (!process.env.MONGODB_URL) {
+        console.error("no mongodb url setup!")
       } else {
-        const pool = new Pool({
-          user: process.env.POSTGRES_USER,
-          host: process.env.POSTGRES_HOST,
-          database: process.env.POSTGRES_DATABASE,
-          password: process.env.POSTGRES_PASSWORD,
-          port: process.env.POSTGRES_PORT,
-          ssl: true,
-        })
-        pool.query(`
-          CREATE TABLE IF NOT EXISTS socket_io_attachments (
-              id          bigserial UNIQUE,
-              created_at  timestamptz DEFAULT NOW(),
-              payload     bytea
-          );
-        `)
+        await mongooseConnect()
+        const mongoClient = new MongoClient(process.env.MONGODB_URL)
+        await mongoClient.connect()
+        try {
+          await mongoClient.db(DB).createCollection(COLLECTION, {
+            capped: true,
+            size: 1e6,
+          })
+        } catch (e) {
+          // collection already exists
+        }
+        const mongoCollection = mongoClient.db(DB).collection(COLLECTION)
+
         io.use(authMiddleware)
-        io.adapter(createAdapter(pool))
+        io.adapter(createAdapter(mongoCollection))
         io.on("connection", onConnection(io))
       }
     }

@@ -12,8 +12,8 @@ export default async function handler(
 ) {
   if (req.method === "POST") {
     const token = await getToken({ req })
-    const { roomSettings } = req.body
-    if (token && token.profile && roomSettings) {
+    const { roomSettings, questionQueue } = req.body
+    if (token && token.profile && roomSettings && questionQueue) {
       // generate random string and make sure it's unique in db
       let roomCode = randomBytes(4).toString("hex")
       let found = await getRoom(roomCode)
@@ -28,8 +28,8 @@ export default async function handler(
         leaderboard: {},
         admin: token.profile.username,
         usersInProgress: [],
-        questionQueue: [],
-        currentQuestion: undefined,
+        questionQueue: questionQueue,
+        currentQuestion: "",
         isRunning: false,
       })
 

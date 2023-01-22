@@ -28,13 +28,14 @@ export default function PeopleDialog({ usernames, open, onClose }: PropsType) {
   const [users, setUsers] = useState<UserProfile[]>([])
 
   useEffect(() => {
+    console.log("got", usernames)
     const getProfiles = async () => {
       const profiles = []
       for (let i = 0; i < usernames.length; i++) {
         const res = await axios.get("/api/user", {
           params: { username: usernames[i] },
         })
-        if (res.status === 200) {
+        if (res.status === 200 || res.status === 304) {
           profiles.push(res.data.data)
         }
       }

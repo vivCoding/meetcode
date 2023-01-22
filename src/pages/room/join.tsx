@@ -102,11 +102,6 @@ export const getServerSideProps: GetServerSideProps<PropsType> = async (
     return {
       props: {
         profile: token.profile as UserProfile,
-        // profile: {
-        //   username: "vvvu",
-        //   userAvatar:
-        //     "https://assets.leetcode.com/users/avatars/avatar_1648876515.png",
-        // },
       },
     }
   }

@@ -33,13 +33,16 @@ import axios from "axios"
 import { useRouter } from "next/router"
 import { getToken } from "next-auth/jwt"
 import { useState } from "react"
+import { toast } from "react-toastify"
 
 import Navbar from "@/components/Navbar"
 import LISTS from "@/constants/leetcode/lists.json"
 import TOPICS from "@/constants/leetcode/topics.json"
+import TOAST_CONFIG from "@/constants/toastconfig"
 
 import type { Question, QuestionSearchResult } from "@/types/leetcode/question"
 import type { UserProfile } from "@/types/leetcode/user"
+import type { RoomSettings } from "@/types/room"
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next"
 
 type PropsType = {
@@ -62,10 +65,10 @@ export default function CreatePage({
   const [searchValue, setSearchValue] = useState("")
   const [questions, setQuestions] = useState<QuestionSearchResult[]>([])
 
-  const [showLeadboard, setShowLeaderboard] = useState(true)
+  const [showLeaderboard, setShowLeaderboard] = useState(true)
   const [showSubmissionMessage, setShowSubmissionMessage] = useState(true)
-  const [timeLimitPerQuestion, setTimeLimitPerQuestion] = useState(0)
-  const [contestTimeLimit, setContestTimeLimit] = useState(0)
+  const [timeLimitPerQuestion, setTimeLimitPerQuestion] = useState(15)
+  const [contestTimeLimit, setContestTimeLimit] = useState(60)
 
   const onSearch = (_: React.SyntheticEvent, value: string, reason: string) => {
     console.log(value)
@@ -96,11 +99,27 @@ export default function CreatePage({
   }
 
   const handleCreate = async () => {
-    const res = await axios.post("/api/room/create")
-    if (res.status === 200) {
-      console.log(res.data.roomCode)
+    const roomSettings: RoomSettings = {
+      mode,
+      problemTags: topics,
+      problemListTag: list,
+      problemDifficulty: difficulty,
+      showLeaderboard,
+      showSubmissionMessage,
+      contestTimeLimit,
+      timeLimit: timeLimitPerQuestion,
+      isOpen: true,
     }
-    // router.push("/room/1234abcd")
+    const res = await axios.post("/api/room/create", {
+      roomSettings,
+      questionQueue: questions.map((q) => q.titleSlug),
+    })
+    if (res.status === 200) {
+      // console.log(res.data.roomCode)
+      router.push(`/room/${res.data.roomCode}`)
+    } else {
+      toast.error("Oops! Could not create room!", TOAST_CONFIG)
+    }
   }
 
   if (!profile) return <>Loading...</>
@@ -130,7 +149,7 @@ export default function CreatePage({
             Create Room
           </Typography>
           <div style={{ textAlign: "left" }}>
-            <Stack direction="row" alignItems="center">
+            {/* <Stack direction="row" alignItems="center">
               <Typography sx={{ mr: 10 }}>Mode</Typography>
               <RadioGroup row sx={{ ml: "auto", flexWrap: "wrap", gap: 1 }}>
                 {MODES.map((name) => {
@@ -165,7 +184,7 @@ export default function CreatePage({
                   )
                 })}
               </RadioGroup>
-            </Stack>
+            </Stack> */}
             {mode === "Casual" && (
               <>
                 <Typography level="h4" sx={{ mt: 4, mb: 2 }}>
@@ -408,7 +427,7 @@ export default function CreatePage({
               <strong>Room Settings</strong>
             </Typography>
             <Stack spacing={2}>
-              {mode === "Casual" && (
+              {/* {mode === "Casual" && (
                 <Stack direction="row" alignItems="center">
                   <Typography sx={{ mr: "auto" }}>
                     Time Limit per Question
@@ -422,7 +441,7 @@ export default function CreatePage({
                     }
                   />
                 </Stack>
-              )}
+              )} */}
               {mode === "Competitive" && (
                 <Stack direction="row" alignItems="center">
                   <Typography sx={{ mr: "auto" }}>

@@ -37,35 +37,46 @@ import axios from "axios"
 import { useRouter } from "next/router"
 import { getToken } from "next-auth/jwt"
 import { useState } from "react"
+import { toast } from "react-toastify"
 
-import Navbar from "@/components/Navbar"
 import LISTS from "@/constants/leetcode/lists.json"
 import TOPICS from "@/constants/leetcode/topics.json"
+import TOAST_CONFIG from "@/constants/toastconfig"
 
 import type { Question, QuestionSearchResult } from "@/types/leetcode/question"
 import type { UserProfile } from "@/types/leetcode/user"
-import type { RoomModelType } from "@/types/room"
-import type { GetServerSideProps, InferGetServerSidePropsType } from "next"
+import type { RoomModelType, RoomSettings } from "@/types/room"
 
 type PropsType = {
   open: boolean
-  onClose: (changed: boolean, newRoom?: RoomModelType) => void
+  roomCode: string
+  roomState: RoomModelType
+  onClose: () => void
 }
 
 const MODES = ["Casual", "Competitive"]
 const DIFFICULTIES = ["Any", "Easy", "Medium", "Hard"]
 
-export default function SettingsDialog({ open, onClose }: PropsType) {
-  const [mode, setMode] = useState(MODES[0])
-  const [difficulty, setDifficulty] = useState("Any")
-  const [topics, setTopics] = useState<string[]>([])
+export default function SettingsDialog({
+  roomState,
+  roomCode,
+  open,
+  onClose,
+}: PropsType) {
+  const [mode, setMode] = useState(roomState.roomSettings.mode)
+  const [difficulty, setDifficulty] = useState(
+    roomState.roomSettings.problemDifficulty
+  )
+  const [topics, setTopics] = useState<string[]>(
+    roomState.roomSettings.problemTags
+  )
   const [openTopics, setOpenTopics] = useState(false)
-  const [list, setList] = useState("")
+  const [list, setList] = useState(roomState.roomSettings.problemListTag)
   const [searchOptions, setSearchOptions] = useState<QuestionSearchResult[]>([])
   const [searchValue, setSearchValue] = useState("")
   const [questions, setQuestions] = useState<QuestionSearchResult[]>([])
 
-  const [showLeadboard, setShowLeaderboard] = useState(true)
+  const [showLeaderboard, setShowLeaderboard] = useState(true)
   const [showSubmissionMessage, setShowSubmissionMessage] = useState(true)
   const [timeLimitPerQuestion, setTimeLimitPerQuestion] = useState(0)
   const [contestTimeLimit, setContestTimeLimit] = useState(0)
@@ -98,11 +109,35 @@ export default function SettingsDialog({ open, onClose }: PropsType) {
   }
 
   const handleCancel = () => {
-    onClose(false)
+    onClose()
   }
 
-  const handleUpdate = () => {
-    onClose(true)
+  const handleUpdate = async () => {
+    const roomSettings: RoomSettings = {
+      mode,
+      problemTags: topics,
+      problemListTag: list,
+      problemDifficulty: difficulty,
+      showLeaderboard,
+      showSubmissionMessage,
+      contestTimeLimit,
+      timeLimit: timeLimitPerQuestion,
+      isOpen: true,
+    }
+    const res = await axios.post("/api/room/changesettings.ts", {
+      roomCode,
+      roomSettings,
+      questionQueue: questions.map((q) => q.titleSlug),
+    })
+    if (res.status === 200) {
+      toast.success(
+        "Updated room settings! Changes will take effect next round",
+        TOAST_CONFIG
+      )
+    } else {
+      toast.error("Could not update room settings!", TOAST_CONFIG)
+    }
+    onClose()
   }
 
   return (
@@ -122,7 +157,7 @@ export default function SettingsDialog({ open, onClose }: PropsType) {
             px: 10,
           }}
         >
-          <Stack direction="row" alignItems="center">
+          {/* <Stack direction="row" alignItems="center">
             <Typography sx={{ mr: 10 }}>Mode</Typography>
             <RadioGroup row sx={{ ml: "auto", flexWrap: "wrap", gap: 1 }}>
               {MODES.map((name) => {
@@ -157,7 +192,7 @@ export default function SettingsDialog({ open, onClose }: PropsType) {
                 )
               })}
             </RadioGroup>
-          </Stack>
+          </Stack> */}
           {mode === "Casual" && (
             <>
               <Typography level="h4" sx={{ mt: 4, mb: 2 }}>
@@ -391,7 +426,7 @@ export default function SettingsDialog({ open, onClose }: PropsType) {
             <strong>Room Settings</strong>
           </Typography>
           <Stack spacing={2}>
-            {mode === "Casual" && (
+            {/* {mode === "Casual" && (
               <Stack direction="row" alignItems="center">
                 <Typography sx={{ mr: "auto" }}>
                   Time Limit per Question
@@ -405,7 +440,7 @@ export default function SettingsDialog({ open, onClose }: PropsType) {
                   }
                 />
               </Stack>
-            )}
+            )} */}
             {mode === "Competitive" && (
               <Stack direction="row" alignItems="center">
                 <Typography sx={{ mr: "auto" }}>Contest Time Limit</Typography>

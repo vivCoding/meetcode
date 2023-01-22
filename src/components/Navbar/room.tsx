@@ -25,12 +25,16 @@ type NavbarProps = {
   profile: UserProfile
   roomCode: string
   roomState: RoomModelType
+  onStartRoom: () => void
+  onGiveUp: () => void
 }
 
 export default function RoomNavbar({
   roomCode,
   profile,
   roomState,
+  onGiveUp,
+  onStartRoom,
 }: NavbarProps) {
   const router = useRouter()
 
@@ -39,10 +43,6 @@ export default function RoomNavbar({
   const [openSettings, setOpenSettings] = useState(false)
   const [openPeople, setOpenPeople] = useState(false)
   const [openLeaderboard, setOpenLeaderboard] = useState(false)
-
-  const members = roomState.memberList
-
-  const leaderboard = roomState.leaderboard
 
   const handleLeave = (confirm: boolean) => {
     if (confirm) {
@@ -53,15 +53,12 @@ export default function RoomNavbar({
 
   const handleGiveUp = (confirm: boolean) => {
     if (confirm) {
-      // router.push("/room/join")
+      onGiveUp()
     }
     setOpenConfirmGiveUp(false)
   }
 
-  const handleChangeSettings = (
-    changed: boolean,
-    newSettings?: RoomModelType
-  ) => {
+  const handleChangeSettings = () => {
     setOpenSettings(false)
   }
 
@@ -97,34 +94,35 @@ export default function RoomNavbar({
         </Typography>
       </Stack>
 
-      {roomState.admin === profile.username && (
-        <>
-          {roomState.isRunning ? (
-            <Button size="sm" color="danger" startDecorator={<Stop />}>
-              Stop
-            </Button>
-          ) : (
-            <Button size="sm" color="success" startDecorator={<PlayArrow />}>
-              Start
-            </Button>
-          )}
-        </>
+      {roomState.admin === profile.username && !roomState.isRunning && (
+        <Button
+          size="sm"
+          color="success"
+          startDecorator={<PlayArrow />}
+          onClick={onStartRoom}
+        >
+          Start
+        </Button>
       )}
       <Typography sx={{ textAlign: "center" }}>
-        Time Remaining: 00:00:00
+        {roomState.usersInProgress.includes(profile.username)
+          ? "Working on problem"
+          : roomState.usersInProgress.length > 0
+          ? "Waiting for others..."
+          : "Everyone ready!"}
       </Typography>
-      <Typography fontStyle="italic">Waiting for others...</Typography>
       <IconButton
         variant="plain"
-        sx={{ color: "white" }}
+        sx={{ ml: "auto", color: "white" }}
         onClick={() => setOpenConfirmGiveUp(true)}
+        disabled={!roomState.isRunning}
       >
         <Flag />
       </IconButton>
-      {roomState.admin === profile.username && (
+      {roomState.admin === profile.username && !roomState.isRunning && (
         <IconButton
           variant="plain"
-          sx={{ ml: "auto", color: "white" }}
+          sx={{ color: "white" }}
           onClick={() => setOpenSettings(true)}
         >
           <Settings />
@@ -134,11 +132,10 @@ export default function RoomNavbar({
         variant="plain"
         sx={{
           color: "white",
-          ml: roomState.admin === profile.username ? 0 : "auto",
         }}
         onClick={() => setOpenPeople(true)}
       >
-        <Badge badgeContent={members.length} size="sm">
+        <Badge badgeContent={roomState.memberList.length} size="sm">
           <People />
         </Badge>
       </IconButton>
@@ -172,15 +169,20 @@ export default function RoomNavbar({
         open={openConfirmGiveUp}
         onClose={handleGiveUp}
       />
-      <SettingsDialog open={openSettings} onClose={handleChangeSettings} />
+      <SettingsDialog
+        roomState={roomState}
+        roomCode={roomCode}
+        open={openSettings}
+        onClose={() => setOpenSettings(false)}
+      />
       <PeopleDialog
         open={openPeople}
         onClose={() => setOpenPeople(false)}
-        usernames={members}
+        usernames={roomState.memberList}
       />
       <LeaderboardDialog
         currentUser={profile.username}
-        users={leaderboard}
+        users={roomState.leaderboard}
         open={openLeaderboard}
         onClose={() => setOpenLeaderboard(false)}
       />
