@@ -22,11 +22,12 @@ export default async function handler(
         console.error("no postgres url setup!")
       } else {
         const pool = new Pool({
-          user: "ternary-search-db-user",
-          host: "localhost",
-          database: "postgres",
-          password: process.env.POSTGRES_URL,
-          port: 26257,
+          user: process.env.POSTGRES_USER,
+          host: process.env.POSTGRES_HOST,
+          database: process.env.POSTGRES_DATABASE,
+          password: process.env.POSTGRES_PASSWORD,
+          port: process.env.POSTGRES_PORT,
+          ssl: true,
         })
         pool.query(`
           CREATE TABLE IF NOT EXISTS socket_io_attachments (

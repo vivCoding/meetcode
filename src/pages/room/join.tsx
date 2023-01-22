@@ -96,19 +96,17 @@ export default function JoinPage({
 export const getServerSideProps: GetServerSideProps<PropsType> = async (
   context
 ) => {
-  // TODO change
-  // const token = await getToken({ req: context.req })
-  const token = true
+  const token = await getToken({ req: context.req })
   if (token) {
-    // console.log("got lc", (token.profile as any).username)
+    console.log("got lc", (token.profile as any).username)
     return {
       props: {
-        // profile: token.profile as UserProfile,
-        profile: {
-          username: "vvvu",
-          userAvatar:
-            "https://assets.leetcode.com/users/avatars/avatar_1648876515.png",
-        },
+        profile: token.profile as UserProfile,
+        // profile: {
+        //   username: "vvvu",
+        //   userAvatar:
+        //     "https://assets.leetcode.com/users/avatars/avatar_1648876515.png",
+        // },
       },
     }
   }

@@ -95,8 +95,12 @@ export default function CreatePage({
     }
   }
 
-  const handleCreate = () => {
-    router.push("/room/1234abcd")
+  const handleCreate = async () => {
+    const res = await axios.post("/api/room/create")
+    if (res.status === 200) {
+      console.log(res.data.roomCode)
+    }
+    // router.push("/room/1234abcd")
   }
 
   if (!profile) return <>Loading...</>
@@ -466,19 +470,17 @@ export default function CreatePage({
 export const getServerSideProps: GetServerSideProps<PropsType> = async (
   context
 ) => {
-  // TODO change
-  // const token = await getToken({ req: context.req })
-  const token = true
+  const token = await getToken({ req: context.req })
   if (token) {
-    // console.log("got lc", (token.profile as any).username)
+    console.log("got lc", (token.profile as any).username)
     return {
       props: {
-        // profile: token.profile as UserProfile,
-        profile: {
-          username: "vvvu",
-          userAvatar:
-            "https://assets.leetcode.com/users/avatars/avatar_1648876515.png",
-        },
+        profile: token.profile as UserProfile,
+        // profile: {
+        //   username: "vvvu",
+        //   userAvatar:
+        //     "https://assets.leetcode.com/users/avatars/avatar_1648876515.png",
+        // },
       },
     }
   }

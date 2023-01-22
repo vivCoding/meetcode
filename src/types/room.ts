@@ -12,26 +12,23 @@ export type Problem = {
   problem_list_tag: string
 }
 
-export type Settings = {
+export type RoomSettings = {
   mode: string
-  // problem: Problem
-  problem_tags: string[]
-  problem_difficulty: string
-  problem_list_tag: string
-  number_of_questions: number
-  time_limit: number
-  time_limit_total: number
-  leaderboard: boolean
-  show_submission_message: boolean
-  is_open: boolean
+  problemTags: string[]
+  problemDifficulty: string
+  problemListTag: string
+  timeLimit: number
+  contestTimeLimit: number
+  showLeaderboard: boolean
+  showSubmissionMessage: boolean
+  isOpen: boolean
 }
 
 export type Room = {
-  room_settings?: Settings
-  question_queue: string[]
-  member_list: string[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  leaderboard: any[]
+  roomSettings: RoomSettings
+  questionQueue: string[]
+  memberList: string[]
+  leaderboard: { username: string; points: string }[]
   admin: string
-  problem_complete_status: string
+  usersInProgress: string[]
 }

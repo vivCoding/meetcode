@@ -28,6 +28,7 @@
     "@types/react-dom": "18.0.10",
     "@types/selenium-webdriver": "^4.1.9",
     "axios": "^1.2.1",
+    "firebase": "^9.16.0",
     "fuzzysort": "^2.0.4",
     "js-confetti": "^0.11.0",
     "mongodb": "^4.13.0",

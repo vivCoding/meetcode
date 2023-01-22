@@ -1,5 +1,6 @@
 import { getAnalytics } from "firebase/analytics"
 import { initializeApp } from "firebase/app"
+import firebase from "firebase/app"
 import { getFirestore } from "firebase/firestore"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -7,14 +8,14 @@ import { getFirestore } from "firebase/firestore"
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyB0JN2YLV53lea3yVmTp-ZaYK8fM3A7reA",
+  apiKey: process.env.FIREBASE_API_KEY,
   authDomain: "ternary-search.firebaseapp.com",
   databaseURL: "https://ternary-search-default-rtdb.firebaseio.com",
   projectId: "ternary-search",
   storageBucket: "ternary-search.appspot.com",
-  messagingSenderId: "456296834940",
-  appId: "1:456296834940:web:72a3167dc3457a480c66f9",
-  measurementId: "G-Z0GZZGDSZ1",
+  messagingSenderId: process.env.FIREBASE_MESSAGE_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID,
 }
 
 // Initialize Firebase

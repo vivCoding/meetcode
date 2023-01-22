@@ -38,6 +38,7 @@ import { getToken } from "next-auth/jwt"
 import { useEffect, useRef, useState } from "react"
 import Split from "react-split"
 import { toast } from "react-toastify"
+import { io } from "socket.io-client"
 
 import ChatView from "@/components/Chat"
 import SpectateDialog from "@/components/Dialogs/Spectate"
@@ -51,6 +52,7 @@ import type { SubmitResult, TestResult } from "@/types/leetcode/runResult"
 import type { UserProfile } from "@/types/leetcode/user"
 import type { MessageType } from "@/types/room"
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next"
+import type { Socket } from "socket.io-client"
 
 type PropsType = {
   profile?: UserProfile
@@ -96,6 +98,8 @@ export default function RoomPage({
 
   const [openSpectateDialog, setOpenSpectateDialog] = useState(false)
   const [personSpectating, setPersonSpectating] = useState<string | undefined>()
+
+  const sio = useRef<Socket | undefined>(undefined)
 
   useEffect(() => {
     // avoid creating the canvas multiple times
@@ -150,9 +154,50 @@ export default function RoomPage({
 
   useEffect(() => {
     // TODO insert socket on connect event
-    toast.success("Successfully joined room!", TOAST_CONFIG)
-    setReady(true)
-  }, [])
+    // toast.success("Successfully joined room!", TOAST_CONFIG)
+    // setReady(true)
+
+    if (profile) {
+      axios
+        .post("/api/socket")
+        .then((res) => {
+          console.log("lets go")
+          if (res.status === 200) {
+            sio.current = io()
+            sio.current.on("connect", () => {
+              // bruh
+              sio.current?.emit("joinRoom", roomCode, (res: string) => {
+                if (res === "ok") {
+                  setReady(true)
+                  console.log("i joined room yeay")
+                  toast.success("You joined the room!", TOAST_CONFIG)
+                } else {
+                  toast.error("Could not join room :(", TOAST_CONFIG)
+                }
+              })
+            })
+
+            sio.current.on("connect_error", () => {
+              toast.error("Could not join room :(", TOAST_CONFIG)
+            })
+          } else {
+            toast.error(
+              "Error connecting to room. Try again later!",
+              TOAST_CONFIG
+            )
+          }
+        })
+        .catch((e) => {
+          toast.error(`Error connecting to room! ${e}`, TOAST_CONFIG)
+        })
+    }
+
+    return () => {
+      if (sio.current) {
+        sio.current.disconnect()
+      }
+    }
+  }, [profile])
 
   const handleRun = async () => {
     if (question && currentSnippet) {
@@ -170,7 +215,7 @@ export default function RoomPage({
         if (res.data.success) {
           console.log(res.data.data)
           setTestResult(res.data.data)
-          if (res.data.data.status_msg === "Accepted") {
+          if (res.data.data.correct_answer) {
             toast.success("Test cases passed", TOAST_CONFIG)
           } else {
             toast.error(
@@ -611,19 +656,17 @@ export default function RoomPage({
 export const getServerSideProps: GetServerSideProps<PropsType> = async (
   context
 ) => {
-  // TODO change
-  // const token = await getToken({ req: context.req })
-  const token = true
+  const token = await getToken({ req: context.req })
   if (token) {
-    // console.log("got lc", (token.profile as any).username)
+    console.log("got lc", (token.profile as any).username)
     return {
       props: {
-        // profile: token.profile as UserProfile,
-        profile: {
-          username: "vvvu",
-          userAvatar:
-            "https://assets.leetcode.com/users/avatars/avatar_1648876515.png",
-        },
+        profile: token.profile as UserProfile,
+        // profile: {
+        //   username: "vvvu",
+        //   userAvatar:
+        //     "https://assets.leetcode.com/users/avatars/avatar_1648876515.png",
+        // },
       },
     }
   }
