@@ -1,4 +1,4 @@
-import { getRoom, updateRoom } from "@/firebase/queries"
+import { deleteRoom, getRoom, updateRoom } from "@/firebase/queries"
 
 import type { UserProfile } from "@/types/leetcode/user"
 import type { RoomModelType } from "@/types/room"
@@ -25,37 +25,30 @@ export function joinRoom(io: Server, socket: Socket) {
   }
 }
 
-// export function sendMessage(io: Server, socket: Socket) {
-//   return async (message: string) => {
-//     const {
-//       roomCode,
-//       profile: { username, userAvatar },
-//     } = socket.data
-//     const timestamp = new Date().toUTCString()
-//     console.log(username, "in", roomCode, "says", message)
-//     await mongooseConnect()
-//     await Room.updateOne(
-//       { roomCode },
-//       {
-//         $push: {
-//           messages: {
-//             user: socket.data.profile,
-//             message,
-//             timestamp,
-//           },
-//         },
-//       }
-//     ).exec()
-//     io.to(roomCode).emit("newMessage", username, userAvatar, message, timestamp)
-//   }
-// }
-
-export function onDisconnect(io: Server, socket: Socket) {
-  return (reason: DisconnectReason) => {
+export function sendMessage(io: Server, socket: Socket) {
+  return async (message: string) => {
     const {
       roomCode,
       profile: { username, userAvatar },
     } = socket.data
-    console.log("got disconnect from", username, "in", roomCode)
+    io.to(roomCode).emit("newMessage", username, userAvatar, message)
+  }
+}
+
+export function onDisconnect(io: Server, socket: Socket) {
+  return async (reason: DisconnectReason) => {
+    const {
+      roomCode,
+      profile: { username, userAvatar },
+    } = socket.data
+    const room = await getRoom(roomCode)
+    if (room) {
+      room.memberList = room.memberList.filter((member) => member !== username)
+      if (room.memberList.length === 0) {
+        await deleteRoom(roomCode)
+      }
+      console.log("got disconnect from", username, "in", roomCode)
+      io.to(roomCode).emit("memberLeft", username, userAvatar)
+    }
   }
 }

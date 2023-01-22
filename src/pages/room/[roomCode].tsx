@@ -65,7 +65,11 @@ export default function RoomPage({
   const roomCode = router.query.roomCode as string
   const jsConfetti = useRef<JSConfetti | undefined>(undefined)
 
-  const [questionSlug, setQuestionSlug] = useState("trapping-rain-water")
+  const [questionSlug, setQuestionSlug] = useState<string | undefined>(
+    undefined
+  )
+  // for question lists (competitive mode)
+  const [currQuestionIdx, setQuestionIdx] = useState<number>(0)
   const [question, setQuestion] = useState<Question | undefined>()
   const [testCases, setTestCases] = useState("")
 
@@ -171,6 +175,19 @@ export default function RoomPage({
                     setRoomState(roomState)
                     setReady(true)
                     toast.success("You joined the room!", TOAST_CONFIG)
+                    if (roomState.isRunning) {
+                      if (
+                        roomState.roomSettings.mode === "Casual" &&
+                        roomState.currentQuestion
+                      ) {
+                        setQuestionSlug(roomState.currentQuestion)
+                      } else if (
+                        roomState.roomSettings.mode === "Competitive"
+                      ) {
+                        setQuestionSlug(roomState.questionQueue[0])
+                        setQuestionIdx(0)
+                      }
+                    }
                   } else {
                     toast.error("Could not join room :(", TOAST_CONFIG)
                   }
@@ -178,13 +195,63 @@ export default function RoomPage({
               )
             })
 
-            // sio.current.on("newMember", (username: string, userAvatar: string) => {
-            //   setRoomState((prev) => {
-            //     if (prev) {
-            //       prev.memberList.push()
-            //     }
-            //   })
-            // })
+            sio.current.on(
+              "newMember",
+              (username: string, userAvatar: string) => {
+                setRoomState((prev) => {
+                  if (prev) {
+                    prev.memberList.push(username)
+                  }
+                  return prev
+                })
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    user: { username, userAvatar },
+                    message: "joined the room",
+                    timestamp: new Date().toLocaleTimeString(),
+                    connectionMessage: true,
+                  },
+                ])
+              }
+            )
+
+            sio.current.on(
+              "memberLeft",
+              (username: string, userAvatar: string) => {
+                setRoomState((prev) => {
+                  if (prev) {
+                    prev.memberList = prev.memberList.filter(
+                      (member) => member !== username
+                    )
+                  }
+                  return prev
+                })
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    user: { username, userAvatar },
+                    message: "left the room",
+                    timestamp: new Date().toLocaleTimeString(),
+                    connectionMessage: true,
+                  },
+                ])
+              }
+            )
+
+            sio.current.on(
+              "newMessage",
+              (username: string, userAvatar: string, message: string) => {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    user: { username, userAvatar },
+                    message,
+                    timestamp: new Date().toLocaleTimeString(),
+                  },
+                ])
+              }
+            )
 
             sio.current.on("connect_error", () => {
               toast.error("Could not join room :(", TOAST_CONFIG)
@@ -206,7 +273,13 @@ export default function RoomPage({
         sio.current.disconnect()
       }
     }
-  }, [profile])
+  }, [profile, roomCode])
+
+  const handleSendMessage = (newMessage: string) => {
+    if (sio.current && profile) {
+      sio.current.emit("sendMessage", newMessage)
+    }
+  }
 
   const handleRun = async () => {
     if (question && currentSnippet) {
@@ -284,10 +357,10 @@ export default function RoomPage({
     setOpenSpectateDialog(false)
   }
 
-  if (!profile) return <>Loading...</>
+  if (!profile || !roomState) return <>Loading...</>
   return (
     <Box id="confettiParent">
-      <RoomNavbar roomCode={roomCode} profile={profile} />
+      <RoomNavbar roomCode={roomCode} profile={profile} roomState={roomState} />
       <div style={{ height: "90vh" }}>
         <Split
           sizes={[35, 40, 25]}
@@ -323,12 +396,35 @@ export default function RoomPage({
                   <Typography level="h5" sx={{ mb: 1, mr: "auto" }}>
                     {question?.questionId}. {question?.title}
                   </Typography>
-                  <IconButton variant="plain" sx={{ ml: 2 }}>
-                    <ArrowBack />
-                  </IconButton>
-                  <IconButton variant="plain">
-                    <ArrowForward />
-                  </IconButton>
+                  {roomState?.roomSettings.mode === "Competitive" && (
+                    <>
+                      <IconButton
+                        variant="plain"
+                        sx={{ ml: 2 }}
+                        onClick={() => {
+                          setQuestionIdx((prev) =>
+                            prev === 0
+                              ? prev - 1
+                              : roomState.questionQueue.length - 1
+                          )
+                        }}
+                      >
+                        <ArrowBack />
+                      </IconButton>
+                      <IconButton
+                        variant="plain"
+                        onClick={() => {
+                          setQuestionIdx((prev) =>
+                            prev === roomState.questionQueue.length - 1
+                              ? 0
+                              : prev + 1
+                          )
+                        }}
+                      >
+                        <ArrowForward />
+                      </IconButton>
+                    </>
+                  )}
                 </Stack>
                 <Link
                   href={`https://leetcode.com/problems/${question.titleSlug}`}
@@ -582,8 +678,12 @@ export default function RoomPage({
               </Box>
             </Stack>
           </Split>
-          {/* <ChatView profile={profile} messages={messages} ready={ready} /> */}
-          <ChatView profile={profile} ready={ready} />
+          <ChatView
+            profile={profile}
+            messages={messages}
+            ready={ready}
+            onNewMessage={handleSendMessage}
+          />
         </Split>
         <Menu
           anchorEl={anchorEl}

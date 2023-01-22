@@ -4,6 +4,8 @@ export type MessageType = {
   user: UserProfile
   message: string
   timestamp: string
+  connectionMessage?: boolean
+  statusMessage?: boolean
 }
 
 export type RoomSettings = {
@@ -26,14 +28,5 @@ export type RoomModelType = {
   admin: string
   usersInProgress: string[]
   currentQuestion?: string
-}
-
-export type RoomType = {
-  roomSettings: RoomSettings
-  questionQueue: string[]
-  memberList: UserProfile[]
-  leaderboard: { user: UserProfile; points: number }[]
-  admin: string
-  usersInProgress: string[]
-  currentQuestion?: string
+  isRunning: boolean
 }

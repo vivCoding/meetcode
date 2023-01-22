@@ -10,7 +10,7 @@ import {
 import { Badge, Button, IconButton, Stack, Typography } from "@mui/joy"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
 import ConfirmationDialog from "../Dialogs/Confirmation"
 import LeaderboardDialog from "../Dialogs/Leaderboard"
@@ -24,9 +24,14 @@ import type { RoomModelType } from "@/types/room"
 type NavbarProps = {
   profile: UserProfile
   roomCode: string
+  roomState: RoomModelType
 }
 
-export default function RoomNavbar({ roomCode, profile }: NavbarProps) {
+export default function RoomNavbar({
+  roomCode,
+  profile,
+  roomState,
+}: NavbarProps) {
   const router = useRouter()
 
   const [openConfirmLeave, setOpenConfirmLeave] = useState(false)
@@ -35,26 +40,9 @@ export default function RoomNavbar({ roomCode, profile }: NavbarProps) {
   const [openPeople, setOpenPeople] = useState(false)
   const [openLeaderboard, setOpenLeaderboard] = useState(false)
 
-  const [members, setMembers] = useState<string[]>([
-    "frankieray12345",
-    "jviv2061",
-    "vvvu",
-  ])
+  const members = roomState.memberList
 
-  const [leaderboard, setLeaderboard] = useState([
-    {
-      username: "frankieray12345",
-      points: 123,
-    },
-    {
-      username: "jviv2061",
-      points: 12,
-    },
-    {
-      username: "vvvu",
-      points: 425,
-    },
-  ])
+  const leaderboard = roomState.leaderboard
 
   const handleLeave = (confirm: boolean) => {
     if (confirm) {
@@ -109,12 +97,19 @@ export default function RoomNavbar({ roomCode, profile }: NavbarProps) {
         </Typography>
       </Stack>
 
-      <Button size="sm" color="success" startDecorator={<PlayArrow />}>
-        Start
-      </Button>
-      {/* <Button size="sm" color="danger" startDecorator={<Stop />}>
-        Stop
-      </Button> */}
+      {roomState.admin === profile.username && (
+        <>
+          {roomState.isRunning ? (
+            <Button size="sm" color="danger" startDecorator={<Stop />}>
+              Stop
+            </Button>
+          ) : (
+            <Button size="sm" color="success" startDecorator={<PlayArrow />}>
+              Start
+            </Button>
+          )}
+        </>
+      )}
       <Typography sx={{ textAlign: "center" }}>
         Time Remaining: 00:00:00
       </Typography>
@@ -126,16 +121,21 @@ export default function RoomNavbar({ roomCode, profile }: NavbarProps) {
       >
         <Flag />
       </IconButton>
+      {roomState.admin === profile.username && (
+        <IconButton
+          variant="plain"
+          sx={{ ml: "auto", color: "white" }}
+          onClick={() => setOpenSettings(true)}
+        >
+          <Settings />
+        </IconButton>
+      )}
       <IconButton
         variant="plain"
-        sx={{ ml: "auto", color: "white" }}
-        onClick={() => setOpenSettings(true)}
-      >
-        <Settings />
-      </IconButton>
-      <IconButton
-        variant="plain"
-        sx={{ color: "white" }}
+        sx={{
+          color: "white",
+          ml: roomState.admin === profile.username ? 0 : "auto",
+        }}
         onClick={() => setOpenPeople(true)}
       >
         <Badge badgeContent={members.length} size="sm">

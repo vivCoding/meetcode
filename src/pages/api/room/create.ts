@@ -30,6 +30,7 @@ export default async function handler(
         usersInProgress: [],
         questionQueue: [],
         currentQuestion: undefined,
+        isRunning: false,
       })
 
       return res.status(200).json({ roomCode })
