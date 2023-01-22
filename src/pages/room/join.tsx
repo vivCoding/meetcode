@@ -10,6 +10,7 @@ import { useRouter } from "next/router"
 import { getToken } from "next-auth/jwt"
 import { useState } from "react"
 
+import Helmet from "@/components/Helmet"
 import Navbar from "@/components/Navbar"
 
 import type { UserProfile } from "@/types/leetcode/user"
@@ -29,6 +30,7 @@ export default function JoinPage({
 
   return (
     <>
+      <Helmet title="Join Room" />
       <Navbar profile={profile} />
       <div
         style={{

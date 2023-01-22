@@ -35,6 +35,7 @@ import { getToken } from "next-auth/jwt"
 import { useState } from "react"
 import { toast } from "react-toastify"
 
+import Helmet from "@/components/Helmet"
 import Navbar from "@/components/Navbar"
 import LISTS from "@/constants/leetcode/lists.json"
 import TOPICS from "@/constants/leetcode/topics.json"
@@ -126,6 +127,7 @@ export default function CreatePage({
 
   return (
     <>
+      <Helmet title="Create Room" />
       <Navbar profile={profile} />
       <Stack
         alignItems="center"

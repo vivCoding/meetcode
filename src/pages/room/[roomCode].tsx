@@ -42,6 +42,7 @@ import { io } from "socket.io-client"
 
 import ChatView from "@/components/Chat"
 import SpectateDialog from "@/components/Dialogs/Spectate"
+import Helmet from "@/components/Helmet"
 import RoomNavbar from "@/components/Navbar/room"
 import { AVAIL_THEMES } from "@/constants/misc"
 import TOAST_CONFIG from "@/constants/toastconfig"
@@ -103,6 +104,8 @@ export default function RoomPage({
   const [openSpectateDialog, setOpenSpectateDialog] = useState(false)
   const [personSpectating, setPersonSpectating] = useState<string | undefined>()
   const [spectactedCode, setSpectatedCode] = useState<string>("")
+  const [isSpectating, setIsSpectating] = useState(false)
+  const [isSpectated, setIsSpectated] = useState(false)
 
   const sio = useRef<Socket | undefined>(undefined)
 
@@ -282,6 +285,8 @@ export default function RoomPage({
             )
 
             sio.current.on("roomStarted", (roomState: RoomModelType) => {
+              setIsSpectating(false)
+              setPersonSpectating(undefined)
               setRoomState(roomState)
               setQuestionSlug(roomState.currentQuestion)
             })
@@ -294,6 +299,15 @@ export default function RoomPage({
             //     return prev
             //   })
             // })
+
+            sio.current.on("onUpdateCode", (newCode: string) => {
+              setSpectatedCode(newCode)
+            })
+
+            sio.current.on("onSpectateUser", () => {
+              setIsSpectated(true)
+              console.log("okok")
+            })
 
             sio.current.on("connect_error", () => {
               toast.error("Could not join room :(", TOAST_CONFIG)
@@ -327,6 +341,7 @@ export default function RoomPage({
     if (question && currentSnippet) {
       setTabIdx(1)
       setIsRunning(true)
+      setIsSpectating(false)
       setSubmissionResult(undefined)
       const res = await axios.post("/api/problem/run", {
         questionSlug: question.titleSlug,
@@ -360,6 +375,7 @@ export default function RoomPage({
   const handleSubmit = async () => {
     if (question && currentSnippet) {
       setTabIdx(1)
+      setIsSpectating(false)
       setIsSubmitting(true)
       setTestResult(undefined)
       const res = await axios.post("/api/problem/submit", {
@@ -415,6 +431,7 @@ export default function RoomPage({
 
   const handleStartRoom = () => {
     if (sio.current) {
+      setIsSpectating(false)
       sio.current.emit("startRoom", (roomState?: RoomModelType) => {
         setRoomState(roomState)
       })
@@ -422,7 +439,11 @@ export default function RoomPage({
   }
 
   const handleSpectate = (username?: string) => {
-    if (username) {
+    console.log("got", username)
+    if (username && sio.current) {
+      sio.current.emit("spectateUser", username)
+      setIsSpectating(true)
+      setPersonSpectating(username)
     }
     setOpenSpectateDialog(false)
   }
@@ -430,6 +451,8 @@ export default function RoomPage({
   if (!profile || !roomState) return <>Loading...</>
   return (
     <Box id="confettiParent">
+      <Helmet title={`Room ${roomCode}`} />
+
       <RoomNavbar
         roomCode={roomCode}
         profile={profile}
@@ -534,23 +557,48 @@ export default function RoomPage({
           >
             <Box sx={{ marginTop: 1, overflow: "hidden" }}>
               <Stack direction="row" justifyContent="end">
-                <Button variant="outlined" color="neutral">
+                <Button
+                  variant="outlined"
+                  color="neutral"
+                  onClick={() => {
+                    setIsSpectating(false)
+                  }}
+                >
                   My Code
                 </Button>
-                {/* <Button variant="outlined" color="neutral">
-                  frankieray12345
-                </Button> */}
-                {!!!personSpectating && (
-                  <IconButton
+                {!!personSpectating && (
+                  <Button
                     variant="outlined"
                     color="neutral"
-                    onClick={() => setOpenSpectateDialog(true)}
+                    onClick={() => {
+                      setIsSpectating(true)
+                    }}
                   >
-                    <VisibilityOutlined />
-                  </IconButton>
+                    {personSpectating}
+                  </Button>
                 )}
+                {!!!personSpectating &&
+                  !roomState.usersInProgress.includes(profile.username) && (
+                    <IconButton
+                      variant="outlined"
+                      color="neutral"
+                      onClick={() => setOpenSpectateDialog(true)}
+                    >
+                      <VisibilityOutlined />
+                    </IconButton>
+                  )}
                 {!!personSpectating && (
-                  <IconButton variant="outlined" color="danger">
+                  <IconButton
+                    variant="outlined"
+                    color="danger"
+                    onClick={() => {
+                      if (sio.current) {
+                        sio.current.emit("stopSpectatingUser")
+                        setIsSpectating(false)
+                        setPersonSpectating(undefined)
+                      }
+                    }}
+                  >
                     <VisibilityOffOutlined />
                   </IconButton>
                 )}
@@ -583,14 +631,21 @@ export default function RoomPage({
               </Stack>
               <Editor
                 theme={theme}
-                value={editorValue}
+                value={isSpectating ? spectactedCode : editorValue}
                 // edge case for python
                 language={
                   currentSnippet?.langSlug === "python3"
                     ? "python"
                     : currentSnippet?.langSlug
                 }
-                onChange={(val) => setEditorValue(val ?? "")}
+                onChange={(val) => {
+                  if (!isSpectating) {
+                    setEditorValue(val ?? "")
+                  }
+                  if (isSpectated && sio.current) {
+                    sio.current.emit("updateCode", val ?? "")
+                  }
+                }}
               />
             </Box>
             <Stack sx={{ height: "100%" }}>
@@ -829,7 +884,7 @@ export default function RoomPage({
           onClose={handleSpectate}
           open={openSpectateDialog}
           currentUser={profile.username}
-          usernames={["frankieray12345", "vvvu", "jviv2061"]}
+          usernames={roomState.memberList}
         />
       </div>
     </Box>

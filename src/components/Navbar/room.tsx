@@ -115,7 +115,7 @@ export default function RoomNavbar({
         variant="plain"
         sx={{ ml: "auto", color: "white" }}
         onClick={() => setOpenConfirmGiveUp(true)}
-        disabled={!roomState.isRunning}
+        disabled={!roomState.usersInProgress.includes(profile.username)}
       >
         <Flag />
       </IconButton>

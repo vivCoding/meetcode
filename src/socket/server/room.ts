@@ -17,6 +17,9 @@ export function joinRoom(io: Server, socket: Socket) {
       socket.join(roomCode)
       room.memberList.push(username)
       room.leaderboard[username] = 0
+      if (room.isRunning) {
+        room.usersInProgress.push(username)
+      }
       await updateRoom(roomCode, room)
       callback(room)
       io.to(roomCode).emit("newMember", username, userAvatar, room)
