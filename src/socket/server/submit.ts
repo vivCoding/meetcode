@@ -15,6 +15,10 @@ export function sendSubmissionStatus(io: Server, socket: Socket) {
       if (idx > -1) {
         room.usersInProgress.splice(idx, 1)
       }
+      // if no more inProgress users, stop running the room
+      if (room.usersInProgress.length == 0) {
+        room.isRunning = false
+      }
       await updateRoom(roomCode, room)
       // tell other clients this user has finished
       io.to(roomCode).emit("memberFinished", username, userAvatar)
