@@ -1,6 +1,7 @@
 import { getTokenFromSocket } from "@/utils/socket"
 
 import { joinRoom, onDisconnect } from "./room"
+import { sendSubmissionStatus } from "./submit"
 
 import type { UserProfile } from "@/types/leetcode/user"
 import type { Server, Socket } from "socket.io"
@@ -31,6 +32,7 @@ export function onConnection(io: Server) {
       // register events
       socket.on("joinRoom", joinRoom(io, socket))
       socket.on("disconnect", onDisconnect(io, socket))
+      socket.on("sendSubmissionStatus", sendSubmissionStatus(io, socket))
     }
   }
 }
