@@ -1,6 +1,6 @@
 import { getTokenFromSocket } from "@/utils/socket"
 
-import { joinRoom, onDisconnect } from "./room"
+import { joinRoom, onDisconnect, sendMessage } from "./room"
 
 import type { UserProfile } from "@/types/leetcode/user"
 import type { Server, Socket } from "socket.io"
@@ -30,6 +30,7 @@ export function onConnection(io: Server) {
       socket.data.profile = token.profile as UserProfile
       // register events
       socket.on("joinRoom", joinRoom(io, socket))
+      socket.on("sendMessage", sendMessage(io, socket))
       socket.on("disconnect", onDisconnect(io, socket))
     }
   }

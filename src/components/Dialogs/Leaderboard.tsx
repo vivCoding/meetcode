@@ -20,7 +20,7 @@ import UserAvatar from "../UserAvatar"
 import type { UserProfile } from "@/types/leetcode/user"
 
 type PropsType = {
-  users: { username: string; points: number }[]
+  users: Record<string, number>
   currentUser: string
   open: boolean
   onClose: () => void
@@ -39,12 +39,13 @@ export default function LeaderboardDialog({
   useEffect(() => {
     const getProfiles = async () => {
       const profiles = []
+      const usernames = Object.keys(users)
       for (let i = 0; i < users.length; i++) {
         const res = await axios.get("/api/user", {
-          params: { username: users[i].username },
+          params: { username: usernames[i] },
         })
         if (res.status === 200) {
-          profiles.push({ user: res.data.data, points: users[i].points })
+          profiles.push({ user: res.data.data, points: users[usernames[i]] })
         }
       }
       setProfiles(profiles)

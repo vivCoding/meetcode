@@ -30,8 +30,9 @@ import type { MessageType } from "@/types/room"
 
 type PropsType = {
   profile: UserProfile
-  // messages: MessageType[]
+  messages: MessageType[]
   ready: boolean
+  onNewMessage: (newMessage: string) => void
 }
 
 const MESSAGE_LENGTH_LIMIT = 100
@@ -54,9 +55,12 @@ function replaceEmojis(s: string): string {
   return s
 }
 
-export default function ChatView({ profile, ready }: PropsType) {
-  // const [canSend, setCanSend] = useState(ready)
-  const [canSend, setCanSend] = useState(true)
+export default function ChatView({
+  profile,
+  messages,
+  ready,
+  onNewMessage,
+}: PropsType) {
   const [messageLength, setMessageLength] = useState(0) // only updated for the warning
 
   const messagesSheet = useRef<HTMLElement | null>(null)
@@ -67,8 +71,6 @@ export default function ChatView({ profile, ready }: PropsType) {
   const [currentHint, setCurrentHint] = useState(0)
 
   const [alertNew, setAlertNew] = useState(false)
-
-  const [messages, setMessages] = useState<MessageType[]>([])
 
   useLayoutEffect(() => {
     // joy ui does not fully support input ref/refs on some stuff yet
@@ -224,22 +226,10 @@ export default function ChatView({ profile, ready }: PropsType) {
 
   const handleSendMessage = () => {
     if (messageTextfield.current) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          user: profile,
-          message: (messageTextfield.current as HTMLInputElement).value,
-          timestamp: new Date().toLocaleTimeString(),
-        },
-      ])
+      onNewMessage(messageTextfield.current.value)
       messageTextfield.current.value = ""
       setMessageLength(0)
     }
-    // if (sio.current && messageTextfield.current) {
-    //   sio.current.emit("sendMessage", messageTextfield.current.value)
-    //   messageTextfield.current.value = ""
-    //   setMessageLength(0)
-    // }
   }
 
   return (
@@ -273,9 +263,13 @@ export default function ChatView({ profile, ready }: PropsType) {
                     {msg.timestamp}
                   </Typography>
                 </Stack>
-                <Typography sx={{ wordBreak: "break-word", mb: 0.5 }}>
-                  {msg.message}
-                </Typography>
+                {msg.connectionMessage ? (
+                  <Typography fontStyle="italic">{msg.message}</Typography>
+                ) : (
+                  <Typography sx={{ wordBreak: "break-word", mb: 0.5 }}>
+                    {msg.message}
+                  </Typography>
+                )}
               </Stack>
             </Stack>
           ))}
@@ -390,7 +384,7 @@ export default function ChatView({ profile, ready }: PropsType) {
                 variant="plain"
                 onClick={handleSendMessage}
                 disabled={
-                  !canSend ||
+                  !ready ||
                   messageLength === 0 ||
                   messageLength > MESSAGE_LENGTH_LIMIT
                 }
