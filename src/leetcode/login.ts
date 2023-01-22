@@ -90,7 +90,7 @@ export async function login(
 
     // ensure we're on the next page before attempting to get tokens
     try {
-      await driver.wait(until.urlIs("https://leetcode.com/"), 5000)
+      await driver.wait(until.urlIs("https://leetcode.com/"), 10000)
       console.log("- ok 5", user)
     } catch (e) {
       console.log("bad 2 login", user, e)

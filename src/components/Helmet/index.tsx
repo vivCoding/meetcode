@@ -8,10 +8,10 @@ const Helmet = ({ title }: HelmetProps) => {
   return (
     <Head>
       <title key="title">{title}</title>
-      <meta name="title" content="TernarySearch" />
+      <meta name="title" content="MeetCode" />
       <meta
         name="description"
-        content="TernarySearch is basically multiplayer LeetCode"
+        content="MeetCode: A collaborate platform to learn LeetCode problems"
       />
     </Head>
   )
