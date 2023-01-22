@@ -1,5 +1,6 @@
 import { getTokenFromSocket } from "@/utils/socket"
 
+import { startRoom } from "./admin"
 import { joinRoom, onDisconnect, sendMessage } from "./room"
 import { sendSubmissionStatus } from "./submit"
 
@@ -31,6 +32,7 @@ export function onConnection(io: Server) {
       socket.data.profile = token.profile as UserProfile
       // register events
       socket.on("joinRoom", joinRoom(io, socket))
+      socket.on("startRoom", startRoom(io, socket))
       socket.on("sendMessage", sendMessage(io, socket))
       socket.on("disconnect", onDisconnect(io, socket))
       socket.on("sendSubmissionStatus", sendSubmissionStatus(io, socket))

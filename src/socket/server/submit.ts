@@ -15,8 +15,9 @@ export function sendSubmissionStatus(io: Server, socket: Socket) {
       if (idx > -1) {
         room.usersInProgress.splice(idx, 1)
       }
-      // if no more inProgress users, stop running the room
+      // if no more inProgress users, stop running the room and set the current question to undefined
       if (room.usersInProgress.length == 0) {
+        room.currentQuestion = undefined
         room.isRunning = false
       }
       await updateRoom(roomCode, room)
