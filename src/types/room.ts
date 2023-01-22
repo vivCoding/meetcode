@@ -6,12 +6,6 @@ export type MessageType = {
   timestamp: string
 }
 
-export type Problem = {
-  problem_tags: string[]
-  problem_difficulty: string
-  problem_list_tag: string
-}
-
 export type RoomSettings = {
   mode: string
   problemTags: string[]
@@ -24,11 +18,22 @@ export type RoomSettings = {
   isOpen: boolean
 }
 
-export type Room = {
+export type RoomModelType = {
   roomSettings: RoomSettings
   questionQueue: string[]
   memberList: string[]
-  leaderboard: { username: string; points: string }[]
+  leaderboard: Record<string, number>
   admin: string
   usersInProgress: string[]
+  currentQuestion?: string
+}
+
+export type RoomType = {
+  roomSettings: RoomSettings
+  questionQueue: string[]
+  memberList: UserProfile[]
+  leaderboard: { user: UserProfile; points: number }[]
+  admin: string
+  usersInProgress: string[]
+  currentQuestion?: string
 }

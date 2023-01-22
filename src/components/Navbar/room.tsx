@@ -19,7 +19,7 @@ import SettingsDialog from "../Dialogs/Settings"
 import UserAvatar from "../UserAvatar"
 
 import type { UserProfile } from "@/types/leetcode/user"
-import type { Room } from "@/types/room"
+import type { RoomModelType } from "@/types/room"
 
 type NavbarProps = {
   profile: UserProfile
@@ -70,7 +70,10 @@ export default function RoomNavbar({ roomCode, profile }: NavbarProps) {
     setOpenConfirmGiveUp(false)
   }
 
-  const handleChangeSettings = (changed: boolean, newSettings?: Room) => {
+  const handleChangeSettings = (
+    changed: boolean,
+    newSettings?: RoomModelType
+  ) => {
     setOpenSettings(false)
   }
 

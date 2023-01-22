@@ -50,7 +50,7 @@ import { sleep } from "@/utils/misc"
 import type { CodeSnippet, Question } from "@/types/leetcode/question"
 import type { SubmitResult, TestResult } from "@/types/leetcode/runResult"
 import type { UserProfile } from "@/types/leetcode/user"
-import type { MessageType } from "@/types/room"
+import type { MessageType, RoomModelType } from "@/types/room"
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next"
 import type { Socket } from "socket.io-client"
 
@@ -100,6 +100,8 @@ export default function RoomPage({
   const [personSpectating, setPersonSpectating] = useState<string | undefined>()
 
   const sio = useRef<Socket | undefined>(undefined)
+
+  const [roomState, setRoomState] = useState<RoomModelType | undefined>()
 
   useEffect(() => {
     // avoid creating the canvas multiple times
@@ -153,29 +155,36 @@ export default function RoomPage({
   }, [currentSnippet])
 
   useEffect(() => {
-    // TODO insert socket on connect event
-    // toast.success("Successfully joined room!", TOAST_CONFIG)
-    // setReady(true)
-
     if (profile) {
       axios
         .post("/api/socket")
         .then((res) => {
-          console.log("lets go")
           if (res.status === 200) {
             sio.current = io()
             sio.current.on("connect", () => {
               // bruh
-              sio.current?.emit("joinRoom", roomCode, (res: string) => {
-                if (res === "ok") {
-                  setReady(true)
-                  console.log("i joined room yeay")
-                  toast.success("You joined the room!", TOAST_CONFIG)
-                } else {
-                  toast.error("Could not join room :(", TOAST_CONFIG)
+              sio.current?.emit(
+                "joinRoom",
+                roomCode,
+                (roomState?: RoomModelType) => {
+                  if (!!roomState) {
+                    setRoomState(roomState)
+                    setReady(true)
+                    toast.success("You joined the room!", TOAST_CONFIG)
+                  } else {
+                    toast.error("Could not join room :(", TOAST_CONFIG)
+                  }
                 }
-              })
+              )
             })
+
+            // sio.current.on("newMember", (username: string, userAvatar: string) => {
+            //   setRoomState((prev) => {
+            //     if (prev) {
+            //       prev.memberList.push()
+            //     }
+            //   })
+            // })
 
             sio.current.on("connect_error", () => {
               toast.error("Could not join room :(", TOAST_CONFIG)

@@ -44,12 +44,12 @@ import TOPICS from "@/constants/leetcode/topics.json"
 
 import type { Question, QuestionSearchResult } from "@/types/leetcode/question"
 import type { UserProfile } from "@/types/leetcode/user"
-import type { Room } from "@/types/room"
+import type { RoomModelType } from "@/types/room"
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next"
 
 type PropsType = {
   open: boolean
-  onClose: (changed: boolean, newRoom?: Room) => void
+  onClose: (changed: boolean, newRoom?: RoomModelType) => void
 }
 
 const MODES = ["Casual", "Competitive"]

@@ -1,6 +1,8 @@
 import { randomBytes } from "crypto"
 
-import initFirebase from "@/firebase/connect"
+import { getToken } from "next-auth/jwt"
+
+import { getRoom, updateRoom } from "@/firebase/queries"
 
 import type { NextApiRequest, NextApiResponse } from "next"
 
@@ -9,18 +11,30 @@ export default async function handler(
   res: NextApiResponse
 ) {
   if (req.method === "POST") {
-    // TODO
-    // await mongooseConnect()
-    initFirebase()
-    const roomCode = randomBytes(5).toString("hex")
-    // generate random string and make sure it's unique in db
-    // do {
-    // eslint-disable-next-line no-var
-    // var roomCode = randomBytes(5).toString("hex")
-    // var found = await Room.findOne({ roomCode }).exec()
-    // } while (!!found)
-    // await Room.create({ roomCode, members: [], messages: [] })
-    return res.status(200).json({ roomCode })
+    const token = await getToken({ req })
+    const { roomSettings } = req.body
+    if (token && token.profile && roomSettings) {
+      // generate random string and make sure it's unique in db
+      let roomCode = randomBytes(4).toString("hex")
+      let found = await getRoom(roomCode)
+      while (!!found) {
+        roomCode = randomBytes(4).toString("hex")
+        found = await getRoom(roomCode)
+      }
+      // add room
+      await updateRoom(roomCode, {
+        roomSettings,
+        memberList: [],
+        leaderboard: {},
+        admin: token.profile.username,
+        usersInProgress: [],
+        questionQueue: [],
+        currentQuestion: undefined,
+      })
+
+      return res.status(200).json({ roomCode })
+    }
+    return res.status(401)
   }
   res.status(405).json("bad")
 }

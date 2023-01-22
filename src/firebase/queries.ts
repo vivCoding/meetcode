@@ -1,5 +1,4 @@
 import {
-  collection,
   deleteDoc,
   doc,
   getDoc,
@@ -9,9 +8,11 @@ import {
 
 import initFirebase from "./connect"
 
-import type { Room } from "@/types/room"
+import type { RoomModelType } from "@/types/room"
 
-export async function getRoom(roomCode: string): Promise<Room | undefined> {
+export async function getRoom(
+  roomCode: string
+): Promise<RoomModelType | undefined> {
   initFirebase()
   const roomSnap = await getDoc(doc(getFirestore(), "rooms", roomCode))
   const settingsSnap = await getDoc(doc(getFirestore(), "settings", roomCode))
@@ -19,14 +20,14 @@ export async function getRoom(roomCode: string): Promise<Room | undefined> {
     return {
       ...roomSnap.data(),
       roomSettings: settingsSnap.data(),
-    } as Room
+    } as RoomModelType
   }
   return undefined
 }
 
 export async function updateRoom(
   roomCode: string,
-  newRoom: Room
+  newRoom: RoomModelType
 ): Promise<void> {
   initFirebase()
   await setDoc(doc(getFirestore(), "settings", roomCode), newRoom.roomSettings)

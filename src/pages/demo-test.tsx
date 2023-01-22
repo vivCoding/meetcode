@@ -1,11 +1,11 @@
 import dynamic from "next/dynamic"
 import { useRef } from "react"
 
-import RoomDataService from "@/firebase_setup/firebase_helper_services"
-
 import handleSubmit from "../handlesubmit"
 
-import type { Room, Settings } from "@/types/room"
+import RoomDataService from "@/firebase_setup/firebase_helper_services"
+
+import type { RoomModelType, Settings } from "@/types/room"
 
 function App2() {
   const dataRef = useRef<any>()
