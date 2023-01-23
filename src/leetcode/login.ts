@@ -96,11 +96,11 @@ export async function login(
       console.log("- ok 5", user)
     } catch (e) {
       console.log("bad 2 login", user, e)
-      const img = await driver.takeScreenshot()
-      writeFile("capture.png", img, { encoding: "base64" }, (e) => {
-        if (!e) console.log("check capture.png")
-        else console.log("could not create capture.png")
-      })
+      // const img = await driver.takeScreenshot()
+      // writeFile("capture.png", img, { encoding: "base64" }, (e) => {
+      //   if (!e) console.log("check capture.png")
+      //   else console.log("could not create capture.png")
+      // })
       jobFinished(workerId)
       return undefined
     }
